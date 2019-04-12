@@ -11,7 +11,9 @@ class HMC(MontePython):
         super().__init__(*args, **kwargs)
         self.gradient = gradient
 
-    # ell and epsilon are fixed during the solving of Hamilton's equations
+    def propose_state(self):
+        # TODO!
+
     def leapfrog(self, ell, epsilon):
         # TODO
 
