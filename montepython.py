@@ -14,6 +14,9 @@ class MontePython(ABC):
         self._chain = np.empty((0, self.dim))
         self.status = ChainStatus(self.dim, startpos)
     
+    def set_seed(self, seed):
+        np.random.seed(seed)
+
     def acceptance_rate(self):
         return self.status.n_accepted() / len(self._chain)
 
@@ -32,7 +35,7 @@ class MontePython(ABC):
             return 1.
         return np.exp(exponent)
 	
-    def accept_or_reject(self, proposed_state, ratio):
+    def maybe_accept(self, proposed_state, ratio):
         if np.random.rand() < ratio:
             self.status.update_state(proposed_state)
         else:
@@ -46,7 +49,7 @@ class MontePython(ABC):
             proposed_state = propose_state()
             ratio = metropolis_ratio(posterior(proposed_state),
                                      posterior(self.status.state()))
-            accept_or_reject(proposed_state, ratio)
+            maybe_accept(proposed_state, ratio)
 
     @abstractmethod
     def propose_state(self):
