@@ -12,7 +12,6 @@ class MontePython(ABC):
         self.args = args
         self.kwargs = kwargs
         self._chain = np.empty((0, self.dim))
-        self.status = ChainStatus(self.dim, startpos)
     
     def set_seed(self, seed):
         np.random.seed(seed)
@@ -29,12 +28,6 @@ class MontePython(ABC):
     def posterior(self, state):
         return prior(state) + likelihood(state)
 	
-    def metropolis_ratio(self, lnprob_proposed, lnprob_current):
-        exponent = lnprob_proposed - lnprob_current
-        if exponent >= 0.:
-            return 1.
-        return np.exp(exponent)
-	
     def maybe_accept(self, proposed_state, ratio):
         if np.random.rand() < ratio:
             self.status.update_state(proposed_state)
@@ -44,7 +37,6 @@ class MontePython(ABC):
 
     def run(self, n_steps):
         extend_chain(n_steps)
-        n_accepted = 0
         for i in range(0, n_steps-1):
             proposed_state = propose_state()
             ratio = metropolis_ratio(posterior(proposed_state),
@@ -54,13 +46,21 @@ class MontePython(ABC):
     @abstractmethod
     def propose_state(self):
         raise NotImplementedError("Unimplemented abstract method!")
+    
+    @abstractmethod
+    def metropolis_ratio(self, *args, **kwargs):
+        raise NotImplementedError("Unimplemented abstract method!")
 
-class ChainStatus():
+    @abstractmethod
+    def run(self, n_steps):
+        raise NotImplementedError("Unimplemented abstract method!")
 
-    def __init__(self, dim, startpos):
+class Status():
+
+    def __init__(self, state):
         self._dim = dim
         self._index = -1
-        self._state = startpos
+        self._state = state
         self._n_accepted = 0
 
     def update_state(self):
@@ -79,3 +79,6 @@ class ChainStatus():
 
     def n_accepted(self):
         return self._n_accepted
+
+class State():
+    def __init__(self, position):
