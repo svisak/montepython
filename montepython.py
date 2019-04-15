@@ -9,77 +9,62 @@ class MontePython(ABC):
         self.dim = dim
         self.prior = prior
         self.likelihood = likelihood
+        self.chain = Chain(self.dim, startpos)
         self.args = args
         self.kwargs = kwargs
-        self._chain = np.empty((0, self.dim))
-        self.status = ChainStatus(self.dim, startpos)
     
     def set_seed(self, seed):
         np.random.seed(seed)
 
     def acceptance_rate(self):
-        return self.status.n_accepted() / len(self._chain) # Check this
+        return self.chain.acceptance_rate()
 
     def chain(self):
-        return self._chain
-
-    def extend_chain(self, n):
-        self._chain = np.concatenate((self._chain, np.zeros((n, self.dim))))
+        return self.chain.chain()
 
     def posterior(self, position):
-        return prior(position) + likelihood(position)
+        return prior(state) + likelihood(state)
 	
-    # Move to subclasses
-    def metropolis_ratio(self, lnprob_proposed, lnprob_current):
-        exponent = lnprob_proposed - lnprob_current
-        if exponent >= 0.:
-            return 1.
-        return np.exp(exponent)
-	
-    # Move to subclasses
-    def maybe_accept(self, proposed_position, ratio):
-        if np.random.rand() < ratio:
-            self.status.update_state(proposed_position)
-        else:
-            self.status.update_state()
-        self._chain[self.status.index(), :] = self.status.position()
-
-    # THIS SHOULD BE ABSTRACT
-    def run(self, n_steps):
-        extend_chain(n_steps)
-        n_accepted = 0
-        for i in range(0, n_steps-1):
-            proposed_state = propose_state()
-            ratio = metropolis_ratio(posterior(proposed_state),
-                                     posterior(self.status.state()))
-            maybe_accept(proposed_state, ratio)
-
-    # Move to subclasses?
     @abstractmethod
-    def propose_state(self):
+    def propose(self):
+        raise NotImplementedError("Unimplemented abstract method!")
+    
+    @abstractmethod
+    def run(self, n_steps):
         raise NotImplementedError("Unimplemented abstract method!")
 
-class ChainStatus():
 
-    def __init__(self, dim, startpos):
-        self._dim = dim
-        self._index = -1
-        self._position = startpos
-        self._n_accepted = 0
+class Chain():
 
-    def update_state(self):
-        self._index++
+    def __init__(self, dim):
+        self.dim = dim
+        self.chain = np.empty((0, self.dim))
+        self.n_accepted = 0
+        self.index = -1
 
-    def update_state(self, position):
-        self._index++
-        self._state = position
-        self._n_accepted++
+    def accept(self, position):
+        self.chain[self.index+1, :] = position
+        self.n_accepted++
+        self.index++
+
+    def reject(self):
+        self.chain[self.index+1, :] = head()
+        self.index++
+
+    def head(self):
+        return self.chain[self.index, :]
+
+    def chain(self):
+        return self.chain
+
+    def extend_chain(self, n):
+        self.chain = np.concatenate((self.chain, np.zeros((n, self.dim))))
 
     def index(self):
-        return self._index
+        return self.index
 
-    def position(self):
-        return self._position
+    def acceptance_rate(self):
+        return self.n_accepted / len(self.chain) # Check this
 
-    def n_accepted(self):
-        return self._n_accepted
+    def dim(self):
+        return self.dim
