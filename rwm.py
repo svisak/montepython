@@ -6,23 +6,26 @@ class RandomWalkMetropolis(MontePython):
 
     def __init__(self, *args, **kwargs, stepsize):
         super().__init__(*args, **kwargs)
-        self.status = Status(self.dim, startpos)
         self.stepsize = stepsize
 
-    def metropolis_ratio(self, proposed_position):
-        current_position = self.status.state().position()
-        exponent = posterior(proposed_position) - posterior(current_state)
-        if exponent >= 0.:
-            return 1.
-        return np.exp(exponent)
-	
-    def propose_state(self):
+    def propose(self):
         cov = stepsize * np.eye(self.dim)
-        return np.random.multivariate_normal(self.status.state(), cov)
+        return np.random.multivariate_normal(self.chain.head(), cov)
 
     def run(self, n_steps)
         extend_chain(n_steps)
         for i in range(0, n_steps-1):
-            proposed_state = propose_state()
-            ratio = metropolis_ratio(proposed_state)
-            maybe_accept(proposed_state, ratio)
+            proposed_position = propose()
+
+            # Metropolis ratio
+            current_position = self.chain.head()
+            exponent = posterior(proposed_position) - posterior(current_position)
+            ratio = 1.
+            if exponent < 0.:
+                ratio = np.exp(exponent)
+
+            # Accept/reject
+            if np.random.rand() < ratio:
+                self.chain.accept(proposed_position)
+            else:
+                self.chain.reject()
