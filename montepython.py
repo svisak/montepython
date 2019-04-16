@@ -9,7 +9,7 @@ class MontePython(ABC):
         self.dim = dim
         self.prior = prior
         self.likelihood = likelihood
-        self.chain = Chain(self.dim, startpos)
+        self.chain = Chain(self.dim)
         self.args = args
         self.kwargs = kwargs
     
@@ -19,11 +19,11 @@ class MontePython(ABC):
     def acceptance_rate(self):
         return self.chain.acceptance_rate()
 
-    def chain(self):
-        return self.chain.chain()
+    def get_chain(self):
+        return self.chain.get_chain()
 
     def posterior(self, position):
-        return prior(state) + likelihood(state)
+        return self.prior(position) + self.likelihood(position)
 	
     @abstractmethod
     def propose(self):
@@ -44,17 +44,17 @@ class Chain():
 
     def accept(self, position):
         self.chain[self.index+1, :] = position
-        self.n_accepted++
-        self.index++
+        self.n_accepted += 1
+        self.index += 1
 
     def reject(self):
-        self.chain[self.index+1, :] = head()
-        self.index++
+        self.chain[self.index+1, :] = self.head()
+        self.index += 1
 
     def head(self):
         return self.chain[self.index, :]
 
-    def chain(self):
+    def get_chain(self):
         return self.chain
 
     def extend_chain(self, n):
@@ -66,5 +66,5 @@ class Chain():
     def acceptance_rate(self):
         return self.n_accepted / len(self.chain) # Check this
 
-    def dim(self):
+    def dimensionality(self):
         return self.dim

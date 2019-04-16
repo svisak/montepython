@@ -2,10 +2,11 @@
 # HMC sampling class.
 
 import montepython
+import numpy as np
 
-class HMC(MontePython):
+class HMC(montepython.MontePython):
 
-    def __init__(self, *args, **kwargs, gradient, ell, epsilon):
+    def __init__(self, gradient, ell, epsilon, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.leapfrog = Leapfrog(gradient, ell, epsilon)
         self.mass_matrix = np.eye(self.dim)
@@ -20,27 +21,27 @@ class HMC(MontePython):
 
     def propose(self):
         position = self.chain.head()
-        mean = np.zeros(self.chain.dim())
-        cov = np.eye(self.chain.dim())
+        mean = np.zeros(self.chain.dimensionality())
+        cov = np.eye(self.chain.dimensionality())
         momentum = np.random.multivariate_normal(mean, cov)
-        proposed_position, proposed_momentum = leapfrog.solve(position, momentum)
+        proposed_position, proposed_momentum = self.leapfrog.solve(position, momentum)
         return (proposed_position, proposed_momentum)
 
-    def hamiltonian(self, position, momentum)
-        potential_energy = posterior(position)
+    def hamiltonian(self, position, momentum):
+        potential_energy = self.posterior(position)
         kinetic_energy = np.matmul(momentum, np.matmul(self.mass_matrix, momentum))
         kinetic_energy /= 2.
         return potential_energy + kinetic_energy
 
     def run(self, n_steps):
-        extend_chain(n_steps)
-        momentum = np.zeros(self.chain.dim())
+        self.chain.extend_chain(n_steps)
+        momentum = np.zeros(self.chain.dimensionality())
         for i in range(0, n_steps-1):
-            proposed_position, proposed_momentum = propose()
+            proposed_position, proposed_momentum = self.propose()
 
             # METROPOLIS RATIO
-            proposed_energy = hamiltonian(proposed_position, proposed_momentum)
-            current_energy = hamiltonian(self.chain.head(), momentum)
+            proposed_energy = self.hamiltonian(proposed_position, proposed_momentum)
+            current_energy = self.hamiltonian(self.chain.head(), momentum)
             exponent = proposed_energy - current_energy
             ratio = 1.
             if exponent < 0.:
@@ -68,8 +69,8 @@ class Leapfrog():
         return self.epsilon + 0.1*self.epsilon*np.random.rand()
 
     def solve(self, position, momentum):
-        ell = draw_ell()
-        epsilon = draw_epsilon()
+        ell = self.draw_ell()
+        epsilon = self.draw_epsilon()
 
         # SOLVE AND RETURN
         momentum = momentum - self.gradient(position) / 2
