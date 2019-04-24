@@ -3,7 +3,7 @@
 import montepython
 import numpy as np
 
-class RandomWalkMetropolis(montepython.MontePython):
+class RWM(montepython.MontePython):
 
     def __init__(self, stepsize, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -14,13 +14,13 @@ class RandomWalkMetropolis(montepython.MontePython):
         return np.random.multivariate_normal(self.chain.head(), cov)
 
     def run(self, n_steps):
-        self.chain.extend_chain(n_steps)
-        for i in range(0, n_steps-1):
+        self.chain.extend(n_steps)
+        for i in range(1, n_steps):
             proposed_position = self.propose()
 
             # Metropolis ratio
             current_position = self.chain.head()
-            exponent = self.posterior(proposed_position) - self.posterior(current_position)
+            exponent = self.lnposterior(proposed_position) - self.lnposterior(current_position)
             ratio = 1.
             if exponent < 0.:
                 ratio = np.exp(exponent)

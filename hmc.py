@@ -28,21 +28,23 @@ class HMC(montepython.MontePython):
         return (proposed_position, proposed_momentum)
 
     def hamiltonian(self, position, momentum):
-        potential_energy = self.posterior(position)
+        potential_energy = -self.lnposterior(position)
+        if np.isinf(potential_energy):
+            return potential_energy
         kinetic_energy = np.matmul(momentum, np.matmul(self.mass_matrix, momentum))
         kinetic_energy /= 2.
         return potential_energy + kinetic_energy
 
     def run(self, n_steps):
-        self.chain.extend_chain(n_steps)
+        self.chain.extend(n_steps)
         momentum = np.zeros(self.chain.dimensionality())
-        for i in range(0, n_steps-1):
+        for i in range(1, n_steps):
             proposed_position, proposed_momentum = self.propose()
 
             # METROPOLIS RATIO
             proposed_energy = self.hamiltonian(proposed_position, proposed_momentum)
             current_energy = self.hamiltonian(self.chain.head(), momentum)
-            exponent = proposed_energy - current_energy
+            exponent = current_energy - proposed_energy
             ratio = 1.
             if exponent < 0.:
                 ratio = np.exp(exponent)
@@ -63,17 +65,19 @@ class Leapfrog():
         self.epsilon = epsilon
 
     def draw_ell(self):
-        return self.ell + np.random.randint(-self.ell // 5, self.ell // 5)
+        return self.ell
+        # return self.ell + np.random.randint(-self.ell // 5, self.ell // 5)
 
     def draw_epsilon(self):
-        return self.epsilon + 0.1*self.epsilon*np.random.rand()
+        return self.epsilon
+        # return self.epsilon + 0.1*self.epsilon*np.random.rand()
 
     def solve(self, position, momentum):
         ell = self.draw_ell()
         epsilon = self.draw_epsilon()
 
         # SOLVE AND RETURN
-        momentum = momentum - self.gradient(position) / 2
+        momentum = momentum - epsilon * self.gradient(position) / 2
         for i in range(1, ell):
             position = position + epsilon * momentum
             if (i != ell):

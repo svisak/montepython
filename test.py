@@ -2,27 +2,25 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from rwm import RandomWalkMetropolis
+from rwm import RWM
 from hmc import HMC
 
-def prior(q):
-    if np.amax(np.abs(q)) < 10:
-        return 0
-    else:
-        return np.NINF
+# Specify distributions
+def lnprior(q):
+    return 1 # Prior is just ln(e)
 
-def likelihood(q):
+def lnlikelihood(q):
     return -0.5 * q**2
 
 def gradient(q):
-    return q*np.exp(-0.5 * q**2)
+    return -q*np.exp(-0.5 * q**2)
 
+# Run parameters
 dim = 1
 startpos = np.zeros(dim)
-stepsize = 2.5
+stepsize = 4.5
 
-
-rwm = RandomWalkMetropolis(stepsize, dim, startpos, prior, likelihood)
+rwm = RWM(stepsize, dim, startpos, lnprior, lnlikelihood)
 rwm.run(10000)
 
 plt.figure(figsize=(4.5, 3.0))
@@ -31,20 +29,20 @@ y = np.sqrt(1/2/np.pi) * np.exp(-0.5 * x**2)
 plt.plot(x, y)
 
 plt.hist(rwm.get_chain(), bins=500, density=True, stacked=True)
-plt.savefig('rwm.pdf', bbox_inches='tight')
+plt.savefig('fig/rwm.pdf', bbox_inches='tight')
 
-hmc = HMC(gradient, 30, 0.1, dim, startpos, prior, likelihood)
-hmc.run(10000)
+hmc = HMC(gradient, 30, 0.015, dim, startpos, lnprior, lnlikelihood)
+hmc.run(100000)
 
 plt.figure(figsize=(4.5, 3.0))
 plt.hist(hmc.get_chain(), bins=500, density=True, stacked=True)
 plt.plot(x, y)
-plt.savefig('hmc.pdf', bbox_inches='tight')
+plt.savefig('fig/hmc.pdf', bbox_inches='tight')
 
 plt.figure(figsize=(4.5, 3.0))
-plt.hist(rwm.get_chain(), bins=500)
-plt.hist(hmc.get_chain(), bins=500)
-plt.savefig('both.pdf', bbox_inches='tight')
+plt.hist(rwm.get_chain(), bins=500, density=True, stacked=True)
+plt.hist(hmc.get_chain(), bins=500, density=True, stacked=True)
+plt.savefig('fig/both.pdf', bbox_inches='tight')
 
-print(hmc.acceptance_rate())
-print(rwm.acceptance_rate())
+print('Acceptance rate HMC: {}'.format(hmc.acceptance_rate()))
+print('Acceptance rate RWM: {}'.format(rwm.acceptance_rate()))

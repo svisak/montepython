@@ -5,13 +5,17 @@ import numpy as np
 
 class MontePython(ABC):
 
-    def __init__(self, dim, startpos, prior, likelihood, args=[], kwargs={}):
-        self.dim = dim
-        self.prior = prior
-        self.likelihood = likelihood
-        self.chain = Chain(self.dim)
+    def __init__(self, dim, startpos, lnprior, lnlikelihood, args=[], kwargs={}):
         self.args = args
         self.kwargs = kwargs
+        self.dim = dim
+        self.lnprior = lnprior
+        self.lnlikelihood = lnlikelihood
+
+        # Create chain and add startpos to it
+        self.chain = Chain(self.dim)
+        self.chain.extend(1)
+        self.chain.accept(startpos)
     
     def set_seed(self, seed):
         np.random.seed(seed)
@@ -22,9 +26,14 @@ class MontePython(ABC):
     def get_chain(self):
         return self.chain.get_chain()
 
-    def posterior(self, position):
-        return self.prior(position) + self.likelihood(position)
-	
+    def lnposterior(self, position):
+        if np.isinf(self.lnprior(position)):
+            return self.lnprior(position)
+        elif np.isinf(self.lnlikelihood(position)):
+            return self.lnlikelihood(position)
+        else:
+            return self.lnprior(position) + self.lnlikelihood(position)
+
     @abstractmethod
     def propose(self):
         raise NotImplementedError("Unimplemented abstract method!")
@@ -57,14 +66,14 @@ class Chain():
     def get_chain(self):
         return self.chain
 
-    def extend_chain(self, n):
+    def extend(self, n):
         self.chain = np.concatenate((self.chain, np.zeros((n, self.dim))))
 
-    def index(self):
+    def current_index(self):
         return self.index
 
     def acceptance_rate(self):
-        return self.n_accepted / len(self.chain) # Check this
+        return self.n_accepted / (self.index+1)
 
     def dimensionality(self):
         return self.dim
