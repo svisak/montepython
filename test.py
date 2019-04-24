@@ -13,7 +13,7 @@ def lnlikelihood(q):
     return -0.5 * q**2
 
 def gradient(q):
-    return -q*np.exp(-0.5 * q**2)
+    return -np.sqrt(1/2/np.pi) * q * np.exp(-0.5 * q**2)
 
 # Run parameters
 dim = 1

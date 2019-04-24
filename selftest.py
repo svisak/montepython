@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 from montepython import Chain
+from hmc import HMC
 
 class ChainTestCase(unittest.TestCase):
 
@@ -25,6 +26,27 @@ class ChainTestCase(unittest.TestCase):
                 chain.reject()
                 self.assertEqual(chain.acceptance_rate(), 0.5)
                 self.assertTrue((chain.head() == q).all())
+
+class HMCTestCase(unittest.TestCase):
+
+    def setUp(self):
+        def lnprior(position):
+            return 1
+
+        def lnlikelihood(position):
+            return 1
+
+        def gradient(position):
+            return 0
+
+        self.dim = 10
+        startpos = np.zeros(self.dim)
+        self.hmc = HMC(gradient, 1, 1, self.dim, startpos, lnprior, lnlikelihood)
+
+    def test_hamiltonian(self):
+        position = 0
+        momentum = 2*np.ones(self.dim)
+        self.assertEqual(self.hmc.hamiltonian(position, momentum), 18)
 
 if __name__ == '__main__':
     unittest.main()
