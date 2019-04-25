@@ -7,13 +7,14 @@ from hmc import HMC
 
 # Specify distributions
 def lnprior(q):
-    return 1 # Prior is just ln(e)
+    return 0 # Prior is just 1
 
 def lnlikelihood(q):
     return -0.5 * q**2
 
 def gradient(q):
-    return -np.sqrt(1/2/np.pi) * q * np.exp(-0.5 * q**2)
+    #return -np.sqrt(1/2/np.pi) * q * np.exp(-0.5 * q**2)
+    return -q
 
 # Run parameters
 dim = 1
@@ -31,8 +32,8 @@ plt.plot(x, y)
 plt.hist(rwm.get_chain(), bins=500, density=True, stacked=True)
 plt.savefig('fig/rwm.pdf', bbox_inches='tight')
 
-hmc = HMC(gradient, 30, 0.015, dim, startpos, lnprior, lnlikelihood)
-hmc.run(100000)
+hmc = HMC(gradient, 100, 0.001, dim, startpos, lnprior, lnlikelihood)
+hmc.run(50000)
 
 plt.figure(figsize=(4.5, 3.0))
 plt.hist(hmc.get_chain(), bins=500, density=True, stacked=True)

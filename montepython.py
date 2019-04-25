@@ -27,12 +27,8 @@ class MontePython(ABC):
         return self.chain.get_chain()
 
     def lnposterior(self, position):
-        if np.isinf(self.lnprior(position)):
-            return self.lnprior(position)
-        elif np.isinf(self.lnlikelihood(position)):
-            return self.lnlikelihood(position)
-        else:
-            return self.lnprior(position) + self.lnlikelihood(position)
+        # TODO Handle non-ln posterior = 0 etc
+        return self.lnprior(position) + self.lnlikelihood(position)
 
     @abstractmethod
     def propose(self):
