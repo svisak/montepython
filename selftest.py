@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 from montepython import Chain
 from hmc import HMC
+import utils
 
 class ChainTestCase(unittest.TestCase):
 
@@ -47,6 +48,33 @@ class HMCTestCase(unittest.TestCase):
         position = 0
         momentum = 2*np.ones(self.dim)
         self.assertEqual(self.hmc.hamiltonian(position, momentum), 18)
+
+class UtilsTestCase(unittest.TestCase):
+
+    def test_autocorrelation_small(self):
+        chain = np.empty((10, 1))
+        for i in range(10, 0, -1):
+            chain[i-1, 0] = i
+        max_lag = 1
+        acors = utils.autocorrelation(chain, max_lag)
+        self.assertEqual(acors[0, 0], 1)
+        self.assertLess(acors[max_lag, 0]-0.927710843373494, 0.00001)
+
+    '''
+    This test can theoretically fail even when the autocorrelation method
+    is implemented correctly, since the test relies on random numbers being
+    sufficiently uncorrelated.
+    '''
+    def test_autocorrelation_big(self):
+        tol = 1e-5
+        max_dimensions = 10
+        max_lag = 100
+        for dim in range(1, max_dimensions+1):
+            chain = np.random.rand(10000, dim)
+            acors = utils.autocorrelation(chain, max_lag)
+            self.assertLess(np.abs(np.amax(acors[0, :]))-1, tol)
+            self.assertLess(np.abs(np.amin(acors[0, :]))-1, tol)
+            self.assertLess(np.amax(acors[1:, :]), 0.05)
 
 if __name__ == '__main__':
     unittest.main()
