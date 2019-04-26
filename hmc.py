@@ -11,19 +11,20 @@ class HMC(montepython.MontePython):
         self.leapfrog = Leapfrog(gradient, ell, epsilon)
         self.mass_matrix = np.eye(self.dim)
 
-    # TO SET A CUSTOM MASS MATRIX
     def set_mass_matrix(self, mass_matrix):
         self.mass_matrix = mass_matrix
 
-    # TO MULTIPLY CURRENT MASS MATRIX BY SCALAR
-    def set_mass_matrix(self, scalar):
+    def scale_mass_matrix(self, scalar):
         self.mass_matrix *= scalar
+
+    def draw_momentum(self):
+        mean = np.zeros(self.chain.dimensionality())
+        cov = np.eye(self.chain.dimensionality())
+        return np.random.multivariate_normal(mean, cov)
 
     def propose(self):
         position = self.chain.head()
-        mean = np.zeros(self.chain.dimensionality())
-        cov = np.eye(self.chain.dimensionality())
-        momentum = np.random.multivariate_normal(mean, cov)
+        momentum = self.draw_momentum()
         proposed_position, proposed_momentum = self.leapfrog.solve(position, momentum)
         return (proposed_position, proposed_momentum)
 
@@ -37,7 +38,7 @@ class HMC(montepython.MontePython):
 
     def run(self, n_steps):
         self.chain.extend(n_steps)
-        momentum = np.empty(self.chain.dimensionality())
+        momentum = self.draw_momentum()
         for i in range(1, n_steps):
             proposed_position, proposed_momentum = self.propose()
 
