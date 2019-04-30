@@ -8,23 +8,28 @@ class HMC(montepython.MontePython):
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.leapfrog = Leapfrog(gradient, ell, epsilon)
         self.mass_matrix = np.eye(self.dim)
+        self.inv_mass_matrix = np.eye(self.dim)
+        self.leapfrog = Leapfrog(gradient, ell, epsilon, self.inv_mass_matrix)
 
     def set_mass_matrix(self, mass_matrix):
         self.mass_matrix = mass_matrix
+        self.inv_mass_matrix = np.linalg.inv(self.mass_matrix)
+        self.leapfrog.set_inv_mass_matrix(self.inv_mass_matrix)
 
     def scale_mass_matrix(self, scalar):
         self.mass_matrix *= scalar
+        self.inv_mass_matrix = np.linalg.inv(self.mass_matrix)
+        self.leapfrog.set_inv_mass_matrix(self.inv_mass_matrix)
 
     def draw_momentum(self):
         mean = np.zeros(self.chain.dimensionality())
         cov = np.eye(self.chain.dimensionality())
         return np.random.multivariate_normal(mean, cov)
 
-    def propose(self):
+    def propose(self, momentum):
         position = self.chain.head()
-        momentum = self.draw_momentum()
+        #momentum = self.draw_momentum()
         proposed_position, proposed_momentum = self.leapfrog.solve(position, momentum)
         return (proposed_position, proposed_momentum)
 
@@ -32,15 +37,15 @@ class HMC(montepython.MontePython):
         potential_energy = -self.lnposterior(position)
         if np.isinf(potential_energy):
             return potential_energy
-        kinetic_energy = np.matmul(momentum, np.matmul(self.mass_matrix, momentum))
+        kinetic_energy = np.matmul(momentum, np.matmul(self.inv_mass_matrix, momentum))
         kinetic_energy /= 2.
         return potential_energy + kinetic_energy
 
     def run(self, n_steps):
         self.chain.extend(n_steps)
-        momentum = self.draw_momentum()
         for i in range(1, n_steps):
-            proposed_position, proposed_momentum = self.propose()
+            momentum = self.draw_momentum()
+            proposed_position, proposed_momentum = self.propose(momentum)
 
             # METROPOLIS RATIO
             proposed_energy = self.hamiltonian(proposed_position, proposed_momentum)
@@ -53,19 +58,22 @@ class HMC(montepython.MontePython):
             # ACCEPT / REJECT
             if np.random.rand() < ratio:
                 self.chain.accept(proposed_position)
-                momentum = proposed_momentum
             else:
                 self.chain.reject()
 
 
 class Leapfrog():
 
-    def __init__(self, gradient, ell, epsilon):
+    def __init__(self, gradient, ell, epsilon, inv_mass_matrix):
         self.gradient = gradient
         self.ell = ell
         self.epsilon = epsilon
+        self.inv_mass_matrix = inv_mass_matrix
         self.all_positions = []
         self.all_momenta = []
+
+    def set_inv_mass_matrix(self, inv_mass_matrix):
+        self.inv_mass_matrix = inv_mass_matrix
 
     def draw_ell(self):
         return self.ell
@@ -86,13 +94,13 @@ class Leapfrog():
         # SOLVE AND RETURN
         momentum = momentum - epsilon * self.gradient(position) / 2
         #self.all_momenta.append(momentum)
-        for i in range(1, ell):
-            position = position + epsilon * momentum
+        for i in range(1, ell+1):
+            position = position + epsilon * momentum * self.inv_mass_matrix
             self.all_positions.append(position)
             if (i != ell):
                 momentum = momentum - epsilon * self.gradient(position)
                 self.all_momenta.append(momentum)
         momentum = momentum - epsilon * self.gradient(position) / 2
-        #self.all_momenta.append(momentum)
+        self.all_momenta.append(momentum)
         momentum = -momentum
         return (position, momentum)
