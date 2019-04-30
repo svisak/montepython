@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 from montepython import Chain
 from hmc import HMC
+from rwm import RWM
 import utils
 
 class ChainTestCase(unittest.TestCase):
@@ -27,6 +28,19 @@ class ChainTestCase(unittest.TestCase):
                 chain.reject()
                 self.assertEqual(chain.acceptance_rate(), 0.5)
                 self.assertTrue((chain.head() == q).all())
+
+class MontePythonTestCase(unittest.TestCase):
+
+    def test_lnposterior(self):
+        def lnprior(x):
+            return x
+        def lnlikelihood(x):
+            return x
+        rwm = RWM(1, 1, 1, lnprior, lnlikelihood)
+        self.assertEqual(rwm.lnposterior(2), 4)
+        self.assertEqual(rwm.lnposterior(np.NINF), np.NINF)
+        with self.assertRaises(ValueError):
+            rwm.lnposterior(np.nan)
 
 class HMCTestCase(unittest.TestCase):
 
