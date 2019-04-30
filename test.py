@@ -9,6 +9,7 @@ import utils
 var = 0.8
 mu = 4
 N = 50000
+max_lag = 200
 
 # Specify distributions
 def lnprior(q):
@@ -19,11 +20,9 @@ def lnprior(q):
 
 def lnlikelihood(q):
     return -0.5 * (q-mu)**2 / var
-    #return 1
 
 def gradient(q):
     return (q-mu) / var
-    #return 0 #np.NINF
 
 # Run parameters
 dim = 1
@@ -34,7 +33,7 @@ x = np.linspace(0, 8)
 y = np.sqrt(1/2/np.pi/var) * np.exp(-0.5 * (x-mu)**2/var)
 
 def rwm_test():
-    sigma = 7.0
+    sigma = 3.0
     rwm = RWM(sigma, dim, startpos, lnprior, lnlikelihood)
     rwm.run(N)
     print('Acceptance rate RWM: {}'.format(rwm.acceptance_rate()))
@@ -46,10 +45,9 @@ def rwm_test():
     plt.xlabel(r'$q$')
     plt.ylabel(r'$\pi(q)$')
     plt.title(r'RWM, sigma $= {}$, acceptance\_rate $= {}$'.format(sigma, rwm.acceptance_rate()))
-    plt.savefig('fig/rwm_sigma{}.pdf'.format(sigma), bbox_inches='tight')
+    plt.savefig('fig/rwm_sigma{}_N{}.pdf'.format(sigma, N), bbox_inches='tight')
 
     plt.figure(figsize=(4.5, 3.0))
-    max_lag = 400
     lags = np.arange(0, max_lag+1)
     plt.plot(lags, utils.autocorrelation(rwm.get_chain(), max_lag))
     plt.xlabel('Lag')
@@ -58,8 +56,8 @@ def rwm_test():
     plt.savefig('fig/autocorr_rwm_sigma{}_N{}.pdf'.format(sigma, N), bbox_inches='tight')
 
 def hmc_test():
-    ell = 100
-    epsilon = 0.2
+    ell = 200
+    epsilon = 0.3
     hmc = HMC(gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood)
     mi = 1.0
     hmc.scale_mass_matrix(mi)
@@ -75,13 +73,12 @@ def hmc_test():
     plt.savefig('fig/hmc_mi{}_L{}_eps{}_N{}.pdf'.format(mi, ell, epsilon, N), bbox_inches='tight')
 
     plt.figure(figsize=(4.5, 3.0))
-    max_lag = 200
     lags = np.arange(0, max_lag+1)
     plt.plot(lags, utils.autocorrelation(hmc.get_chain(), max_lag))
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
-    plt.title(r'Autocorrelation HMC, $m_i = {}$, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(mi, hmc.acceptance_rate(), ell, epsilon))
-    plt.savefig('fig/autocorr_hmc_mi{}_L{}_eps{}.pdf'.format(mi, ell, epsilon), bbox_inches='tight')
+    plt.title(r'Autocorrelation HMC, $m_i = {}$, acc_rate $= {}, L = {}, \epsilon = {}$'.format(mi, hmc.acceptance_rate(), ell, epsilon))
+    plt.savefig('fig/autocorr_hmc_mi{}_L{}_eps{}_N{}.pdf'.format(mi, ell, epsilon, N), bbox_inches='tight')
 
 rwm_test()
 hmc_test()
