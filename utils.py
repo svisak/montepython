@@ -28,7 +28,7 @@ def most_correlated(acors):
     most = -1
     dimensions = acors.shape[1]
     for dim in range(dim):
-        total = np.abs(np.sum(acors[:, dim]))
+        total = np.sum(np.abs(acors[:, dim]))
         if np.abs(total) > maximum:
             maximum = total
             most = dim
