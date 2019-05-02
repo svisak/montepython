@@ -69,8 +69,6 @@ class Leapfrog():
         self.ell = ell
         self.epsilon = epsilon
         self.inv_mass_matrix = inv_mass_matrix
-        self.all_positions = []
-        self.all_momenta = []
 
     def set_inv_mass_matrix(self, inv_mass_matrix):
         self.inv_mass_matrix = inv_mass_matrix
@@ -84,23 +82,15 @@ class Leapfrog():
         # return self.epsilon + 0.1*self.epsilon*np.random.rand()
 
     def solve(self, position, momentum):
-        self.all_positions = []
-        self.all_momenta = []
-        self.all_positions.append(position)
-        self.all_momenta.append(momentum)
         ell = self.draw_ell()
         epsilon = self.draw_epsilon()
 
         # SOLVE AND RETURN
         momentum = momentum - epsilon * self.gradient(position) / 2
-        #self.all_momenta.append(momentum)
         for i in range(1, ell+1):
             position = position + epsilon * np.matmul(self.inv_mass_matrix, momentum)
-            self.all_positions.append(position)
             if (i != ell):
                 momentum = momentum - epsilon * self.gradient(position)
-                self.all_momenta.append(momentum)
         momentum = momentum - epsilon * self.gradient(position) / 2
-        self.all_momenta.append(momentum)
         momentum = -momentum
         return (position, momentum)
