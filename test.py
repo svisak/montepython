@@ -77,7 +77,7 @@ def hmc_test():
     plt.plot(lags, utils.autocorrelation(hmc.get_chain(), max_lag))
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
-    plt.title(r'Autocorrelation HMC, $m_i = {}$, acc_rate $= {}, L = {}, \epsilon = {}$'.format(mi, hmc.acceptance_rate(), ell, epsilon))
+    plt.title(r'Autocorrelation HMC, $m_i = {}$, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(mi, hmc.acceptance_rate(), ell, epsilon))
     plt.savefig('fig/autocorr_hmc_mi{}_L{}_eps{}_N{}.pdf'.format(mi, ell, epsilon, N), bbox_inches='tight')
 
 rwm_test()
