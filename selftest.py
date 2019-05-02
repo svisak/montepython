@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
 from montepython import Chain
-from hmc import HMC
+from hmc import HMC, Energy
+from rwm import RWM
 import utils
 
 class ChainTestCase(unittest.TestCase):
@@ -28,26 +29,34 @@ class ChainTestCase(unittest.TestCase):
                 self.assertEqual(chain.acceptance_rate(), 0.5)
                 self.assertTrue((chain.head() == q).all())
 
-class HMCTestCase(unittest.TestCase):
+class MontePythonTestCase(unittest.TestCase):
+
+    def test_lnposterior(self):
+        def lnprior(x):
+            return x
+        def lnlikelihood(x):
+            return x
+        rwm = RWM(1, 1, 1, lnprior, lnlikelihood)
+        self.assertEqual(rwm.lnposterior(2), 4)
+        self.assertEqual(rwm.lnposterior(np.NINF), np.NINF)
+        with self.assertRaises(ValueError):
+            rwm.lnposterior(np.nan)
+
+class EnergyTestCase(unittest.TestCase):
 
     def setUp(self):
-        def lnprior(position):
-            return 1
-
-        def lnlikelihood(position):
-            return 1
-
-        def gradient(position):
-            return 0
-
+        def lnposterior(position):
+            return 2
         self.dim = 10
-        startpos = np.zeros(self.dim)
-        self.hmc = HMC(gradient, 1, 1, self.dim, startpos, lnprior, lnlikelihood)
+        self.energy = Energy(lnposterior, np.eye(self.dim))
+
+    def test_potential(self):
+        self.assertEqual(self.energy.potential(0), -2)
 
     def test_hamiltonian(self):
         position = 0
         momentum = 2*np.ones(self.dim)
-        self.assertEqual(self.hmc.hamiltonian(position, momentum), 18)
+        self.assertEqual(self.energy.hamiltonian(position, momentum), 18)
 
 class UtilsTestCase(unittest.TestCase):
 

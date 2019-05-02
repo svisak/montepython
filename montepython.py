@@ -27,8 +27,20 @@ class MontePython(ABC):
         return self.chain.get_chain()
 
     def lnposterior(self, position):
-        # TODO Handle non-ln posterior = 0 etc
-        return self.lnprior(position) + self.lnlikelihood(position)
+        # CONVENIENCE
+        lnprior_val = self.lnprior(position)
+        lnlikelihood_val = self.lnlikelihood(position)
+
+        # CHECK INF/NAN
+        if np.isinf(lnprior_val):
+            return lnprior_val
+        elif np.isinf(lnlikelihood_val):
+            return lnlikelihood_val
+        if np.isnan(lnprior_val) or np.isnan(lnlikelihood_val):
+            raise ValueError('NaN encountered in lnposterior')
+
+        # OK, RETURN LN OF POSTERIOR
+        return lnprior_val + lnlikelihood_val
 
     @abstractmethod
     def propose(self):
