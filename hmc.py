@@ -95,7 +95,7 @@ class Leapfrog():
         momentum = momentum - epsilon * self.gradient(position) / 2
         #self.all_momenta.append(momentum)
         for i in range(1, ell+1):
-            position = position + epsilon * momentum * self.inv_mass_matrix
+            position = position + epsilon * np.matmul(self.inv_mass_matrix, momentum)
             self.all_positions.append(position)
             if (i != ell):
                 momentum = momentum - epsilon * self.gradient(position)
