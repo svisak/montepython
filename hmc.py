@@ -51,7 +51,11 @@ class Energy():
 
     def __init__(self, lnposterior, mass_matrix):
         self.lnposterior = lnposterior
+        self.mass_matrix = mass_matrix
         self.inverse_mass_matrix = np.linalg.inv(mass_matrix)
+
+    def get_mass_matrix(self):
+        return self.mass_matrix
 
     def get_inverse_mass_matrix(self):
         return self.inverse_mass_matrix
