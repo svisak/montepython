@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from montepython import Chain
-from hmc import HMC
+from hmc import HMC, Energy
 from rwm import RWM
 import utils
 
@@ -42,26 +42,21 @@ class MontePythonTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             rwm.lnposterior(np.nan)
 
-class HMCTestCase(unittest.TestCase):
+class EnergyTestCase(unittest.TestCase):
 
     def setUp(self):
-        def lnprior(position):
-            return 1
-
-        def lnlikelihood(position):
-            return 1
-
-        def gradient(position):
-            return 0
-
+        def lnposterior(position):
+            return 2
         self.dim = 10
-        startpos = np.zeros(self.dim)
-        self.hmc = HMC(gradient, 1, 1, self.dim, startpos, lnprior, lnlikelihood)
+        self.energy = Energy(lnposterior, np.eye(self.dim))
+
+    def test_potential(self):
+        self.assertEqual(self.energy.potential(0), -2)
 
     def test_hamiltonian(self):
         position = 0
         momentum = 2*np.ones(self.dim)
-        self.assertEqual(self.hmc.hamiltonian(position, momentum), 18)
+        self.assertEqual(self.energy.hamiltonian(position, momentum), 18)
 
 class UtilsTestCase(unittest.TestCase):
 
