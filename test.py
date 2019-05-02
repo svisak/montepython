@@ -8,12 +8,12 @@ import utils
 
 var = 0.8
 mu = 4
-N = 50000
+N = 10000
 max_lag = 200
 
 # Specify distributions
 def lnprior(q):
-    if np.abs(q) > 8:
+    if q > mu+4 or q < mu-4 :
         return np.NINF
     else:
         return 0
@@ -29,7 +29,7 @@ dim = 1
 startpos = 0.1 * np.ones(dim)
 
 # A normal distribution
-x = np.linspace(0, 8)
+x = np.linspace(mu-4, mu+4)
 y = np.sqrt(1/2/np.pi/var) * np.exp(-0.5 * (x-mu)**2/var)
 
 def rwm_test():
@@ -58,9 +58,9 @@ def rwm_test():
 def hmc_test():
     ell = 200
     epsilon = 0.3
+    #mass_matrix = 1.0*np.eye(dim)
+    #hmc = HMC(gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood, mass_matrix=mass_matrix)
     hmc = HMC(gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood)
-    mi = 1.0
-    hmc.scale_mass_matrix(mi)
     hmc.run(N)
     print('Acceptance rate HMC: {}'.format(hmc.acceptance_rate()))
 
@@ -69,16 +69,16 @@ def hmc_test():
     plt.plot(x, y)
     plt.xlabel(r'$q$')
     plt.ylabel(r'$\pi(q)$')
-    plt.title(r'HMC, $m_i = {}$, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(mi, hmc.acceptance_rate(), ell, epsilon))
-    plt.savefig('fig/hmc_mi{}_L{}_eps{}_N{}.pdf'.format(mi, ell, epsilon, N), bbox_inches='tight')
+    plt.title(r'HMC, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(hmc.acceptance_rate(), ell, epsilon))
+    plt.savefig('fig/hmc_L{}_eps{}_N{}.pdf'.format(ell, epsilon, N), bbox_inches='tight')
 
     plt.figure(figsize=(4.5, 3.0))
     lags = np.arange(0, max_lag+1)
     plt.plot(lags, utils.autocorrelation(hmc.get_chain(), max_lag))
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
-    plt.title(r'Autocorrelation HMC, $m_i = {}$, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(mi, hmc.acceptance_rate(), ell, epsilon))
-    plt.savefig('fig/autocorr_hmc_mi{}_L{}_eps{}_N{}.pdf'.format(mi, ell, epsilon, N), bbox_inches='tight')
+    plt.title(r'Autocorrelation HMC, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(hmc.acceptance_rate(), ell, epsilon))
+    plt.savefig('fig/autocorr_hmc_L{}_eps{}_N{}.pdf'.format(ell, epsilon, N), bbox_inches='tight')
 
-rwm_test()
+#rwm_test()
 hmc_test()
