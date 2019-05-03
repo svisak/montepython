@@ -77,7 +77,7 @@ class Chain():
     def extend(self, n):
         self.chain = np.concatenate((self.chain, np.zeros((n, self.dim))))
 
-    def current_index(self):
+    def get_index(self):
         return self.index
 
     def acceptance_rate(self):

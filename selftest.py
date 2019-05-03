@@ -11,7 +11,7 @@ class ChainTestCase(unittest.TestCase):
         for i in range(1, 4):
             with self.subTest(i=i):
                 chain = Chain(i)
-                self.assertEqual(chain.current_index(), -1)
+                self.assertEqual(chain.get_index(), -1)
                 self.assertEqual(chain.get_chain().shape, (0,i))
                 with self.assertRaises(ZeroDivisionError):
                     chain.acceptance_rate()
