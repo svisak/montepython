@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from rwm import RWM
 from hmc import HMC
-import utils
+from utils import autocorrelation
 
 var = 0.8
 mu = 4
@@ -49,7 +49,7 @@ def rwm_test():
 
     plt.figure(figsize=(4.5, 3.0))
     lags = np.arange(0, max_lag+1)
-    plt.plot(lags, utils.autocorrelation(rwm.get_chain(), max_lag))
+    plt.plot(lags, autocorrelation(rwm.get_chain(), max_lag))
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
     plt.title(r'Autocorrelation RWM, $\sigma = {}$, acceptance\_rate $= {}$'.format(sigma, rwm.acceptance_rate()))
@@ -74,7 +74,7 @@ def hmc_test():
 
     plt.figure(figsize=(4.5, 3.0))
     lags = np.arange(0, max_lag+1)
-    plt.plot(lags, utils.autocorrelation(hmc.get_chain(), max_lag))
+    plt.plot(lags, autocorrelation(hmc.get_chain(), max_lag))
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
     plt.title(r'Autocorrelation HMC, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(hmc.acceptance_rate(), ell, epsilon))
