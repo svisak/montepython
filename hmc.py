@@ -7,8 +7,15 @@ import numpy as np
 class HMC(montepython.MontePython):
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
+        # POP OPTIONAL PARAMETERS
+        self.save_momenta = kwargs.pop('save_momenta', False)
+        self.temp = kwargs.pop('temp', 1) # TODO Make sure temp != 1 works as intended
         mass_matrix = kwargs.pop('mass_matrix', None)
+
+        # SEND THE REST OF THE PARAMETERS OFF TO BASE CLASS
         super().__init__(*args, **kwargs)
+
+        # INSTANTIATE ENERGY AND LEAPFROG
         self.energy = None
         if None == mass_matrix:
             self.energy = Energy(self.lnposterior, np.eye(self.dim))
@@ -28,6 +35,7 @@ class HMC(montepython.MontePython):
     def run(self, n_steps):
         self.chain.extend(n_steps)
         for i in range(1, n_steps):
+            # PROPOSE NEW STATE
             position = self.chain.head()
             momentum = self.draw_momentum()
             proposed_position, proposed_momentum = self.propose(position, momentum)
@@ -36,12 +44,12 @@ class HMC(montepython.MontePython):
             current_energy = self.energy.hamiltonian(position, momentum)
             proposed_energy = self.energy.hamiltonian(proposed_position, proposed_momentum)
             exponent = current_energy - proposed_energy
-            ratio = 1.
+            metropolis_ratio = 1.
             if exponent < 0.:
-                ratio = np.exp(exponent)
+                metropolis_ratio = np.exp(exponent / self.temp)
 
             # ACCEPT / REJECT
-            if np.random.rand() < ratio:
+            if np.random.rand() < metropolis_ratio:
                 self.chain.accept(proposed_position)
             else:
                 self.chain.reject()
