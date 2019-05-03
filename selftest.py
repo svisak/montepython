@@ -11,7 +11,7 @@ class ChainTestCase(unittest.TestCase):
         for i in range(1, 4):
             with self.subTest(i=i):
                 chain = Chain(i)
-                self.assertEqual(chain.get_index(), -1)
+                self.assertEqual(chain.index, -1)
                 self.assertEqual(chain.get_chain().shape, (0,i))
                 with self.assertRaises(ZeroDivisionError):
                     chain.acceptance_rate()
@@ -57,6 +57,31 @@ class EnergyTestCase(unittest.TestCase):
         position = 0
         momentum = 2*np.ones(self.dim)
         self.assertEqual(self.energy.hamiltonian(position, momentum), 18)
+
+class HMCTestCase(unittest.TestCase):
+
+    def setUp(self):
+        def lnprior(position):
+            return 1
+
+        def lnlikelihood(position):
+            return 1
+
+        def gradient(position):
+            return np.ones(self.dim)
+
+        self.dim = 10
+        startpos = np.zeros(self.dim)
+        ell = 1
+        epsilon = 1.0
+        self.hmc = HMC(gradient, ell, epsilon, self.dim, startpos, lnprior, lnlikelihood)
+
+    def test_chain_size(self):
+        self.assertEqual(len(self.hmc.get_chain()), 1)
+        self.assertEqual(self.hmc.get_chain().shape, (1,10))
+        self.hmc.run(50)
+        self.assertEqual(len(self.hmc.get_chain()), 51)
+        self.assertEqual(self.hmc.get_chain().shape, (51,10))
 
 class UtilsTestCase(unittest.TestCase):
 
