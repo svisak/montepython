@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
 from hmc import HMC
+from rwm import RWM
 import utils
 
 # TARGET DISTRIBUTION
@@ -33,17 +34,23 @@ def gradient(q):
 def run_hmc(n, gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood):
     hmc = HMC(gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood)
     hmc.run(n)
-    print('Acceptance rate HMC: {}'.format(hmc.acceptance_rate()))
+    print('Acceptance rate HMC: {:.10f}'.format(hmc.acceptance_rate()))
     return hmc
 
-def heatmap2d(hmc):
-    q1 = hmc.get_chain()[:, 0]
-    q2 = hmc.get_chain()[:, 1]
+def run_rwm(n, stepsize, dim, startpos, lnprior, lnlikelihood):
+    rwm = RWM(stepsize, dim, startpos, lnprior, lnlikelihood)
+    rwm.run(n)
+    print('Acceptance rate RWM: {:.10f}'.format(rwm.acceptance_rate()))
+    return rwm
+
+def heatmap2d(mcmc):
+    q1 = mcmc.get_chain()[:, 0]
+    q2 = mcmc.get_chain()[:, 1]
     plt.figure(figsize=(4.5, 4.5))
     plt.hist2d(q1, q2, bins=40)
     plt.savefig('tmp.pdf')
 
-def surface2d(hmc):
+def surface2d(mcmc):
     x = hmc.get_chain()[:, 0]
     y = hmc.get_chain()[:, 1]
     fig = plt.figure(figsize=(4.5, 3.0))
@@ -72,6 +79,7 @@ def surface2d(hmc):
     plt.savefig('tmp.pdf')
     
 
-hmc = run_hmc(n_samples, gradient, 100, 0.1, dim, startpos, lnprior, lnlikelihood)
+#hmc = run_hmc(n_samples, gradient, 100, 0.1, dim, startpos, lnprior, lnlikelihood)
+rwm = run_rwm(n_samples, 7.0, dim, startpos, lnprior, lnlikelihood)
 #heatmap2d(hmc)
 #surface2d(hmc)
