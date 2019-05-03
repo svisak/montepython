@@ -8,12 +8,11 @@ class MontePython(ABC):
     def __init__(self, dim, startpos, lnprior, lnlikelihood, args=[], kwargs={}):
         self.args = args
         self.kwargs = kwargs
-        self.dim = dim
         self.lnprior = lnprior
         self.lnlikelihood = lnlikelihood
 
         # Create chain and add startpos to it
-        self.chain = Chain(self.dim)
+        self.chain = Chain(dim)
         self.chain.extend(1)
         self.chain.accept(startpos)
     

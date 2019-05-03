@@ -10,7 +10,7 @@ class RWM(montepython.MontePython):
         self.stepsize = stepsize
 
     def propose(self):
-        cov = self.stepsize * np.eye(self.dim)
+        cov = self.stepsize * np.eye(self.chain.dimensionality())
         return np.random.multivariate_normal(self.chain.head(), cov)
 
     def run(self, n_steps):

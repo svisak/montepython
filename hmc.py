@@ -18,7 +18,7 @@ class HMC(montepython.MontePython):
         # INSTANTIATE ENERGY AND LEAPFROG
         self.energy = None
         if None == mass_matrix:
-            self.energy = Energy(self.lnposterior, np.eye(self.dim))
+            self.energy = Energy(self.lnposterior, np.eye(self.chain.dimensionality()))
         else:
             self.energy = Energy(self.lnposterior, mass_matrix)
         self.leapfrog = Leapfrog(gradient, ell, epsilon, self.energy)
