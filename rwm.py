@@ -15,7 +15,7 @@ class RWM(montepython.MontePython):
 
     def run(self, n_steps):
         self.chain.extend(n_steps)
-        for i in range(1, n_steps):
+        for i in range(n_steps):
             # PROPOSE NEW STATE
             proposed_position = self.propose()
 

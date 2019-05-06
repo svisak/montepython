@@ -82,6 +82,29 @@ class HMCTestCase(unittest.TestCase):
         self.hmc.run(50)
         self.assertEqual(len(self.hmc.get_chain()), 51)
         self.assertEqual(self.hmc.get_chain().shape, (51,10))
+        self.assertEqual(self.hmc.chain.index, 50)
+
+class RWMTestCase(unittest.TestCase):
+
+    def setUp(self):
+        def lnprior(position):
+            return 1
+
+        def lnlikelihood(position):
+            return 1
+
+        self.dim = 2
+        startpos = np.zeros(self.dim)
+        stepsize = 4.0
+        self.rwm = RWM(stepsize, self.dim, startpos, lnprior, lnlikelihood)
+
+    def test_chain_size(self):
+        self.assertEqual(len(self.rwm.get_chain()), 1)
+        self.assertEqual(self.rwm.get_chain().shape, (1,2))
+        self.rwm.run(25)
+        self.assertEqual(len(self.rwm.get_chain()), 26)
+        self.assertEqual(self.rwm.get_chain().shape, (26,2))
+        self.assertEqual(self.rwm.chain.index, 25)
 
 class UtilsTestCase(unittest.TestCase):
 
