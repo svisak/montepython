@@ -10,7 +10,7 @@ from rwm import RWM
 import utils
 
 # TARGET DISTRIBUTION
-dim = 2
+dim = 16
 mu = 4 * np.ones(dim)
 var = np.eye(dim)
 var_inv = np.linalg.inv(var)
@@ -28,7 +28,7 @@ def lnlikelihood(q):
     return -0.5 * np.matmul((q-mu), tmp)
 
 def gradient(q):
-    return np.matmul((q-mu), var_inv)
+    return np.matmul(var_inv, (q-mu))
 
 # HMC
 def run_hmc(n, gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood):
@@ -78,8 +78,65 @@ def surface2d(mcmc):
     plt.ylabel('Y label')
     plt.savefig('tmp.pdf')
     
+def time_leapfrog():
+    def lnpr(q):
+        return 0
 
+    def lnlik(q):
+        tmp = np.matmul(var_inv, (q-mu))
+        return -0.5 * np.matmul((q-mu), tmp)
+
+    def grad(q, ):
+        return np.matmul(var_inv, (q-mu))
+
+    dims = np.zeros(100)
+    for i in range(100):
+        dims[i] = i+1
+    dims = dims.astype(int)
+    ells = np.ones(100).astype(int)
+    for i in range(100):
+        ells[i] = 5 * (i+1)
+    time_dims = np.empty(len(dims))
+    time_ells = np.empty(len(ells))
+    for i in range(len(dims)):
+        d = dims[i] 
+        m = 4 * np.ones(d)
+        v = np.eye(d)
+        v_inv = np.linalg.inv(v)
+        def lnpr(q):
+            return 0
+        
+        def lnlik(q):
+            tmp = np.matmul(v_inv, (q-m))
+            return -0.5 * np.matmul((q-m), tmp)
+        
+        def grad(q):
+            return np.matmul(v_inv, (q-m))
+        hmc = HMC(grad, 100, 0.1, d, np.ones(d), lnpr, lnlik)
+        hmc.run(50)
+        time_dims[i] = hmc.exec_time
+    for i in range(len(ells)):
+        d = 16
+        hmc = HMC(gradient, ells[i], 0.1, d, np.ones(d), lnprior, lnlikelihood)
+        hmc.run(50)
+        time_ells[i] = hmc.exec_time
+
+    plt.figure(figsize=(4.5, 3.0))
+    plt.plot(dims, time_dims)
+    plt.xlabel('Dimensions / pcs')
+    plt.ylabel('Time / s')
+    plt.title('Leapfrog execution time vs number of dimensions, 50 samples, L = 100')
+    plt.savefig('time_vs_dim.pdf', bbox_inches='tight')
+
+    plt.figure(figsize=(4.5, 3.0))
+    plt.plot(ells, time_ells)
+    plt.xlabel('L / pcs')
+    plt.ylabel('Time / s')
+    plt.title('Leapfrog execution time vs number of steps L, 50 samples, 16 dimensions')
+    plt.savefig('time_vs_ell.pdf', bbox_inches='tight')
+
+time_leapfrog()
 #hmc = run_hmc(n_samples, gradient, 100, 0.1, dim, startpos, lnprior, lnlikelihood)
-rwm = run_rwm(n_samples, 7.0, dim, startpos, lnprior, lnlikelihood)
+#rwm = run_rwm(n_samples, 7.0, dim, startpos, lnprior, lnlikelihood)
 #heatmap2d(hmc)
 #surface2d(hmc)

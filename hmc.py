@@ -3,10 +3,13 @@
 
 import montepython
 import numpy as np
+from timeit import default_timer as timer
 
 class HMC(montepython.MontePython):
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
+        # FOR TIMING LEAPFROG
+        self.exec_time = 0
         # POP OPTIONAL PARAMETERS
         self.save_momenta = kwargs.pop('save_momenta', False)
         self.temp = kwargs.pop('temp', 1) # TODO Make sure temp != 1 works as intended
@@ -29,7 +32,10 @@ class HMC(montepython.MontePython):
         return np.random.multivariate_normal(mean, cov)
 
     def propose(self, position, momentum):
+        start = timer()
         proposed_position, proposed_momentum = self.leapfrog.solve(position, momentum)
+        end = timer()
+        self.exec_time += end - start
         return (proposed_position, proposed_momentum)
 
     def run(self, n_steps):
