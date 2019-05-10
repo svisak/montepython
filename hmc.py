@@ -40,14 +40,14 @@ class HMC(montepython.MontePython):
             momentum = self.draw_momentum()
             proposed_position, proposed_momentum = self.propose(position, momentum)
 
-            # METROPOLIS RATIO
+            # ACCEPTANCE PROBABILITY
             current_energy = self.energy.hamiltonian(position, momentum)
             proposed_energy = self.energy.hamiltonian(proposed_position, proposed_momentum)
-            energy_diff = current_energy - proposed_energy
-            metropolis_ratio = min(1, np.exp(energy_diff / self.temp))
+            metropolis_ratio = np.exp((current_energy - proposed_energy) / self.temp)
+            acceptance_probability = min(1, metropolis_ratio)
 
             # ACCEPT / REJECT
-            if np.random.rand() < metropolis_ratio:
+            if np.random.rand() < acceptance_probability:
                 self.chain.accept(proposed_position)
             else:
                 self.chain.reject()
