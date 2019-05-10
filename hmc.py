@@ -43,10 +43,8 @@ class HMC(montepython.MontePython):
             # METROPOLIS RATIO
             current_energy = self.energy.hamiltonian(position, momentum)
             proposed_energy = self.energy.hamiltonian(proposed_position, proposed_momentum)
-            exponent = current_energy - proposed_energy
-            metropolis_ratio = 1.
-            if exponent < 0.:
-                metropolis_ratio = np.exp(exponent / self.temp)
+            energy_diff = current_energy - proposed_energy
+            metropolis_ratio = min(1, np.exp(energy_diff / self.temp))
 
             # ACCEPT / REJECT
             if np.random.rand() < metropolis_ratio:

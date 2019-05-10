@@ -21,10 +21,9 @@ class RWM(montepython.MontePython):
 
             # METROPOLIS RATIO
             current_position = self.chain.head()
-            exponent = self.lnposterior(proposed_position) - self.lnposterior(current_position)
-            metropolis_ratio = 1.
-            if exponent < 0.:
-                metropolis_ratio = np.exp(exponent)
+            posterior_diff = self.lnposterior(proposed_position)
+            posterior_diff -= self.lnposterior(current_position)
+            metropolis_ratio = min(1, np.exp(posterior_diff))
 
             # ACCEPT / REJECT
             if np.random.rand() < metropolis_ratio:
