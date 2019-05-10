@@ -3,7 +3,6 @@
 
 import montepython
 import numpy as np
-from timeit import default_timer as timer
 
 class HMC(montepython.MontePython):
 
@@ -31,20 +30,15 @@ class HMC(montepython.MontePython):
         cov = np.eye(self.chain.dimensionality())
         return np.random.multivariate_normal(mean, cov)
 
-    def propose(self, position, momentum):
-        start = timer()
-        proposed_position, proposed_momentum = self.leapfrog.solve(position, momentum)
-        end = timer()
-        self.exec_time += end - start
-        return (proposed_position, proposed_momentum)
-
     def run(self, n_steps):
         self.chain.extend(n_steps)
         for i in range(n_steps):
             # PROPOSE NEW STATE
             position = self.chain.head()
             momentum = self.draw_momentum()
-            proposed_position, proposed_momentum = self.propose(position, momentum)
+            proposed_state = self.leapfrog.solve(position, momentum)
+            proposed_position = proposed_state[0]
+            proposed_momentum = proposed_state[1]
 
             # ACCEPTANCE PROBABILITY
             current_energy = self.energy.hamiltonian(position, momentum)
