@@ -40,7 +40,7 @@ class HMC(montepython.MontePython):
 
     def run(self, n_steps):
         self.chain.extend(n_steps)
-        for i in range(1, n_steps):
+        for i in range(n_steps):
             # PROPOSE NEW STATE
             position = self.chain.head()
             momentum = self.draw_momentum()
