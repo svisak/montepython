@@ -19,14 +19,15 @@ class RWM(montepython.MontePython):
             # PROPOSE NEW STATE
             proposed_position = self.propose()
 
-            # METROPOLIS RATIO
+            # ACCEPTANCE PROBABILITY
             current_position = self.chain.head()
             posterior_diff = self.lnposterior(proposed_position)
             posterior_diff -= self.lnposterior(current_position)
-            metropolis_ratio = min(1, np.exp(posterior_diff))
+            metropolis_ratio = np.exp(posterior_diff)
+            acceptance_probability = min(1, metropolis_ratio)
 
             # ACCEPT / REJECT
-            if np.random.rand() < metropolis_ratio:
+            if np.random.rand() < acceptance_probability:
                 self.chain.accept(proposed_position)
             else:
                 self.chain.reject()
