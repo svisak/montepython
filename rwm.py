@@ -21,9 +21,9 @@ class RWM(montepython.MontePython):
 
             # ACCEPTANCE PROBABILITY
             current_position = self.chain.head()
-            posterior_diff = self.lnposterior(proposed_position)
-            posterior_diff -= self.lnposterior(current_position)
-            metropolis_ratio = np.exp(posterior_diff)
+            lnposterior_diff = self.lnposterior(proposed_position)
+            lnposterior_diff -= self.lnposterior(current_position)
+            metropolis_ratio = np.exp(lnposterior_diff)
             acceptance_probability = min(1, metropolis_ratio)
 
             # ACCEPT / REJECT
