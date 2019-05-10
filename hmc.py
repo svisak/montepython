@@ -34,23 +34,33 @@ class HMC(montepython.MontePython):
         self.chain.extend(n_steps)
         for i in range(n_steps):
             # PROPOSE NEW STATE
-            position = self.chain.head()
-            momentum = self.draw_momentum()
-            proposed_state = self.leapfrog.solve(position, momentum)
-            proposed_position = proposed_state[0]
-            proposed_momentum = proposed_state[1]
+            current = State(self.chain.head(), self.draw_momentum())
+            proposed = self.leapfrog.solve(current)
 
             # ACCEPTANCE PROBABILITY
-            current_energy = self.energy.hamiltonian(position, momentum)
-            proposed_energy = self.energy.hamiltonian(proposed_position, proposed_momentum)
+            current_energy = self.energy.hamiltonian(current)
+            proposed_energy = self.energy.hamiltonian(proposed)
             metropolis_ratio = np.exp((current_energy - proposed_energy) / self.temp)
             acceptance_probability = min(1, metropolis_ratio)
 
             # ACCEPT / REJECT
             if np.random.rand() < acceptance_probability:
-                self.chain.accept(proposed_position)
+                self.chain.accept(proposed.position())
             else:
                 self.chain.reject()
+
+
+class State():
+
+    def __init__(self, position, momentum):
+        self.pos = position
+        self.mom = momentum
+
+    def position(self):
+        return self.pos
+
+    def momentum(self):
+        return self.mom
 
 
 class Energy():
@@ -76,9 +86,9 @@ class Energy():
             raise ValueError('NaN: Energy.kinetic at momentum = {}'.format(momentum))
         return kinetic_energy
 
-    def hamiltonian(self, position, momentum):
-        potential_energy = self.potential(position)
-        kinetic_energy = self.kinetic(momentum)
+    def hamiltonian(self, state):
+        potential_energy = self.potential(state.position())
+        kinetic_energy = self.kinetic(state.momentum())
         if np.isinf(potential_energy):
             return potential_energy
         elif np.isinf(kinetic_energy):
@@ -103,7 +113,11 @@ class Leapfrog():
         return self.epsilon
         # return self.epsilon + 0.1*self.epsilon*np.random.rand()
 
-    def solve(self, position, momentum):
+    def solve(self, initial_state):
+        position = initial_state.position()
+        momentum = initial_state.momentum()
+
+        # PERTURB ELL AND EPSILON
         ell = self.draw_ell()
         epsilon = self.draw_epsilon()
 
@@ -116,4 +130,4 @@ class Leapfrog():
                 momentum = momentum - epsilon * self.gradient(position)
         momentum = momentum - epsilon * self.gradient(position) / 2
         momentum = -momentum
-        return (position, momentum)
+        return State(position, momentum)

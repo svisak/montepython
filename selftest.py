@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from montepython import Chain
-from hmc import HMC, Energy
+from hmc import HMC, Energy, State
 from rwm import RWM
 import utils
 
@@ -56,7 +56,8 @@ class EnergyTestCase(unittest.TestCase):
     def test_hamiltonian(self):
         position = 0
         momentum = 2*np.ones(self.dim)
-        self.assertEqual(self.energy.hamiltonian(position, momentum), 18)
+        state = State(position, momentum)
+        self.assertEqual(self.energy.hamiltonian(state), 18)
 
 class HMCTestCase(unittest.TestCase):
 
