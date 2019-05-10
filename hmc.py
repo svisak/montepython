@@ -28,17 +28,13 @@ class HMC(montepython.MontePython):
         cov = np.eye(self.chain.dimensionality())
         return np.random.multivariate_normal(mean, cov)
 
-    def propose(self, position, momentum):
-        proposed_position, proposed_momentum = self.leapfrog.solve(position, momentum)
-        return (proposed_position, proposed_momentum)
-
     def run(self, n_steps):
         self.chain.extend(n_steps)
         for i in range(n_steps):
             # PROPOSE NEW STATE
             position = self.chain.head()
             momentum = self.draw_momentum()
-            proposed_position, proposed_momentum = self.propose(position, momentum)
+            proposed_position, proposed_momentum = self.leapfrog.solve(position, momentum)
 
             # ACCEPTANCE PROBABILITY
             current_energy = self.energy.hamiltonian(position, momentum)

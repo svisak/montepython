@@ -42,10 +42,6 @@ class MontePython(ABC):
         return lnprior_val + lnlikelihood_val
 
     @abstractmethod
-    def propose(self):
-        raise NotImplementedError("Unimplemented abstract method!")
-    
-    @abstractmethod
     def run(self, n_steps):
         raise NotImplementedError("Unimplemented abstract method!")
 
