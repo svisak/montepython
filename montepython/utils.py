@@ -23,13 +23,17 @@ def autocorrelation(chain, max_lag):
             acors[lag, dim] = np.dot(unshifted, shifted) / normalization
     return acors
 
+def autocorrelation_time(acors):
+    n_dim = acors.shape[1]
+    c = 5 # A constant, see Sokal
+    for M in np.arange(10, 10000):
+        taus = np.zeros(n_dim)
+        for d in np.arange(n_dim):
+            taus[d] = 1 + 2*np.sum(acors[1:M, d])
+        if np.all(taus > 1.0) and M > c*taus.max():
+            return taus
+    raise ValueError('Could not compute autocorrelation time')
+
 def most_correlated(acors):
-    maximum = 0
-    most = -1
-    dimensions = acors.shape[1]
-    for dim in range(dim):
-        total = np.sum(np.abs(acors[:, dim]))
-        if np.abs(total) > maximum:
-            maximum = total
-            most = dim
-    return most
+    taus = autocorrelation_time(acors)
+    return np.argmax(taus)
