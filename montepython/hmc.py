@@ -4,9 +4,12 @@
 from .mcmc import MCMC
 import numpy as np
 
+import time
+
 class HMC(MCMC):
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
+        self.exec_time = 0.
         # POP OPTIONAL PARAMETERS
         self.save_momenta = kwargs.pop('save_momenta', False)
         self.temp = kwargs.pop('temp', 1) # TODO Make sure temp != 1 works as intended
@@ -33,7 +36,10 @@ class HMC(MCMC):
         for i in range(n_steps):
             # PROPOSE NEW STATE
             current = State(self.chain.head(), self.draw_momentum())
+            start = time.time()
             proposed = self.leapfrog.solve(current)
+            stop = time.time()
+            self.exec_time += stop - start
 
             # ACCEPTANCE PROBABILITY
             current_energy = self.energy.hamiltonian(current)
@@ -46,6 +52,7 @@ class HMC(MCMC):
                 self.chain.accept(proposed.position())
             else:
                 self.chain.reject()
+        self.exec_time /= n_steps
 
 
 class State():
