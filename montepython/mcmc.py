@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-class MontePython(ABC):
+class MCMC(ABC):
 
     def __init__(self, dim, startpos, lnprior, lnlikelihood, args=[], kwargs={}):
         self.args = args

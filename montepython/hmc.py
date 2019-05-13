@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # HMC sampling class.
 
-import montepython
+from .mcmc import MCMC
 import numpy as np
 
-class HMC(montepython.MontePython):
+class HMC(MCMC):
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
         # POP OPTIONAL PARAMETERS

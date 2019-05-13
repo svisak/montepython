@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import montepython
+from .mcmc import MCMC
 import numpy as np
 from numpy.random import multivariate_normal
 
-class RWM(montepython.MontePython):
+class RWM(MCMC):
 
     def __init__(self, stepsize, *args, **kwargs):
         super().__init__(*args, **kwargs)
