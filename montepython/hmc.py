@@ -7,8 +7,6 @@ import numpy as np
 class HMC(MCMC):
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
-        # FOR TIMING LEAPFROG
-        self.exec_time = 0
         # POP OPTIONAL PARAMETERS
         self.save_momenta = kwargs.pop('save_momenta', False)
         self.temp = kwargs.pop('temp', 1) # TODO Make sure temp != 1 works as intended
