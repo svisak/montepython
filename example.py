@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-from hmc import HMC
+from montepython.hmc import HMC
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D

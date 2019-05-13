@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
-from montepython import Chain
-from hmc import HMC, Energy, State
-from rwm import RWM
-import utils
+from montepython.mcmc import Chain
+from montepython.hmc import HMC, Energy, State
+from montepython.rwm import RWM
+from montepython import utils
 
 class ChainTestCase(unittest.TestCase):
 
