@@ -12,18 +12,18 @@ class MCMC(ABC):
         self.lnlikelihood = lnlikelihood
 
         # Create chain and add startpos to it
-        self.chain = Chain(dim)
-        self.chain.extend(1)
-        self.chain.accept(startpos)
+        self._chain = Chain(dim)
+        self._chain.extend(1)
+        self._chain.accept(startpos)
     
     def set_seed(self, seed):
         np.random.seed(seed)
 
     def acceptance_rate(self):
-        return self.chain.acceptance_rate()
+        return self._chain.acceptance_rate()
 
-    def get_chain(self):
-        return self.chain.get_chain()
+    def chain(self):
+        return self._chain.chain()
 
     def lnposterior(self, position):
         # CONVENIENCE
@@ -49,31 +49,31 @@ class MCMC(ABC):
 class Chain():
 
     def __init__(self, dim):
-        self.dim = dim
-        self.chain = np.empty((0, self.dim))
-        self.n_accepted = 0
-        self.index = -1
+        self._dim = dim
+        self._chain = np.empty((0, self.dim))
+        self._n_accepted = 0
+        self._index = -1
 
     def accept(self, position):
-        self.chain[self.index+1, :] = position
-        self.n_accepted += 1
-        self.index += 1
+        self._chain[self.index+1, :] = position
+        self._n_accepted += 1
+        self._index += 1
 
     def reject(self):
-        self.chain[self.index+1, :] = self.head()
-        self.index += 1
+        self._chain[self.index+1, :] = self.head()
+        self._index += 1
 
     def head(self):
-        return self.chain[self.index, :]
+        return self._chain[self.index, :]
 
-    def get_chain(self):
-        return self.chain
+    def chain(self):
+        return self._chain
 
     def extend(self, n):
-        self.chain = np.concatenate((self.chain, np.zeros((n, self.dim))))
+        self._chain = np.concatenate((self._chain, np.zeros((n, self._dim))))
 
     def acceptance_rate(self):
-        return self.n_accepted / (self.index+1)
+        return self._n_accepted / (self._index+1)
 
     def dimensionality(self):
-        return self.dim
+        return self._dim

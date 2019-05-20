@@ -8,20 +8,20 @@ class HMC(MCMC):
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
         # POP OPTIONAL PARAMETERS
-        self.save_momenta = kwargs.pop('save_momenta', False)
-        self.temp = kwargs.pop('temp', 1) # TODO Make sure temp != 1 works as intended
+        self._save_momenta = kwargs.pop('save_momenta', False)
+        self._temp = kwargs.pop('temp', 1) # TODO Make sure temp != 1 works as intended
         mass_matrix = kwargs.pop('mass_matrix', None)
 
         # SEND THE REST OF THE PARAMETERS OFF TO BASE CLASS
         super().__init__(*args, **kwargs)
 
         # INSTANTIATE ENERGY AND LEAPFROG
-        self.energy = None
+        self._energy = None
         if None == mass_matrix:
-            self.energy = Energy(self.lnposterior, np.eye(self.chain.dimensionality()))
+            self._energy = Energy(self.lnposterior, np.eye(self.chain.dimensionality()))
         else:
-            self.energy = Energy(self.lnposterior, mass_matrix)
-        self.leapfrog = Leapfrog(gradient, ell, epsilon, self.energy)
+            self._energy = Energy(self.lnposterior, mass_matrix)
+        self._leapfrog = Leapfrog(gradient, ell, epsilon, self.energy)
 
     def draw_momentum(self):
         mean = np.zeros(self.chain.dimensionality())
@@ -51,34 +51,34 @@ class HMC(MCMC):
 class State():
 
     def __init__(self, position, momentum):
-        self.pos = position
-        self.mom = momentum
+        self._pos = position
+        self._mom = momentum
 
     def position(self):
-        return self.pos
+        return self._pos
 
     def momentum(self):
-        return self.mom
+        return self._mom
 
 
 class Energy():
 
     def __init__(self, lnposterior, mass_matrix):
-        self.lnposterior = lnposterior
-        self.mass_matrix = mass_matrix
-        self.inverse_mass_matrix = np.linalg.inv(mass_matrix)
+        self._lnposterior = lnposterior
+        self._mass_matrix = mass_matrix
+        self._inverse_mass_matrix = np.linalg.inv(mass_matrix)
 
     def get_mass_matrix(self):
-        return self.mass_matrix
+        return self._mass_matrix
 
     def get_inverse_mass_matrix(self):
-        return self.inverse_mass_matrix
+        return self._inverse_mass_matrix
 
     def potential(self, position):
-        return -self.lnposterior(position)
+        return -self._lnposterior(position)
 
     def kinetic(self, momentum):
-        tmp = np.matmul(self.inverse_mass_matrix, momentum)
+        tmp = np.matmul(self._inverse_mass_matrix, momentum)
         kinetic_energy = np.matmul(momentum, tmp) / 2
         if np.isnan(kinetic_energy):
             raise ValueError('NaN: Energy.kinetic at momentum = {}'.format(momentum))
@@ -98,17 +98,17 @@ class Energy():
 class Leapfrog():
 
     def __init__(self, gradient, ell, epsilon, energy):
-        self.gradient = gradient
-        self.ell = ell
-        self.epsilon = epsilon
-        self.energy = energy
+        self._gradient = gradient
+        self._ell = ell
+        self._epsilon = epsilon
+        self._energy = energy
 
     def draw_ell(self):
-        return self.ell
+        return self._ell
         # return self.ell + np.random.randint(-self.ell // 5, self.ell // 5)
 
     def draw_epsilon(self):
-        return self.epsilon
+        return self._epsilon
         # return self.epsilon + 0.1*self.epsilon*np.random.rand()
 
     def solve(self, initial_state):
@@ -120,12 +120,12 @@ class Leapfrog():
         epsilon = self.draw_epsilon()
 
         # SOLVE AND RETURN
-        momentum = momentum - epsilon * self.gradient(position) / 2
+        momentum = momentum - epsilon * self._gradient(position) / 2
         for i in range(ell):
-            tmp = np.matmul(self.energy.get_inverse_mass_matrix(), momentum)
+            tmp = np.matmul(self._energy.get_inverse_mass_matrix(), momentum)
             position = position + epsilon * tmp
             if (i != ell-1):
-                momentum = momentum - epsilon * self.gradient(position)
-        momentum = momentum - epsilon * self.gradient(position) / 2
+                momentum = momentum - epsilon * self._gradient(position)
+        momentum = momentum - epsilon * self._gradient(position) / 2
         momentum = -momentum
         return State(position, momentum)
