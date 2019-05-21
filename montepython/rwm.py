@@ -10,6 +10,9 @@ class RWM(MCMC):
         super().__init__(*args, **kwargs)
         self.covariance = stepsize * np.eye(self.chain.dimensionality())
 
+    def get_mcmc_type(self):
+        return "RWM"
+
     def run(self, n_steps):
         self.chain.extend(n_steps)
         for i in range(n_steps):

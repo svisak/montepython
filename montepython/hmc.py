@@ -23,6 +23,9 @@ class HMC(MCMC):
             self.energy = Energy(self.lnposterior, mass_matrix)
         self.leapfrog = Leapfrog(gradient, ell, epsilon, self.energy)
 
+    def get_mcmc_type(self):
+        return "HMC"
+
     def draw_momentum(self):
         mean = np.zeros(self.chain.dimensionality())
         cov = np.eye(self.chain.dimensionality())
