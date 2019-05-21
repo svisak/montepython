@@ -42,6 +42,10 @@ class MCMC(ABC):
         return lnprior_val + lnlikelihood_val
 
     @abstractmethod
+    def get_mcmc_type(self):
+        raise NotImplementedError("Unimplemented abstract method!")
+
+    @abstractmethod
     def run(self, n_steps):
         raise NotImplementedError("Unimplemented abstract method!")
 
