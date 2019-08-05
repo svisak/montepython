@@ -14,7 +14,7 @@ class ChainTestCase(unittest.TestCase):
                 self.assertEqual(metachain._index, -1)
                 self.assertEqual(metachain.chain().shape, (0,i))
                 with self.assertRaises(ZeroDivisionError):
-                    metachain.acceptance_rate()
+                    metachain.acceptance_fraction()
 
     def test_accept_reject(self):
         for i in range(1, 6):
@@ -23,10 +23,10 @@ class ChainTestCase(unittest.TestCase):
                 metachain.extend(10)
                 q = np.random.multivariate_normal(np.zeros(i), np.eye(i))
                 metachain.accept(q)
-                self.assertEqual(metachain.acceptance_rate(), 1)
+                self.assertEqual(metachain.acceptance_fraction(), 1)
                 self.assertTrue((metachain.head() == q).all())
                 metachain.reject()
-                self.assertEqual(metachain.acceptance_rate(), 0.5)
+                self.assertEqual(metachain.acceptance_fraction(), 0.5)
                 self.assertTrue((metachain.head() == q).all())
 
 class MontePythonTestCase(unittest.TestCase):

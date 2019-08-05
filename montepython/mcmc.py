@@ -24,8 +24,8 @@ class MCMC(ABC):
     def set_seed(self, seed):
         np.random.seed(seed)
 
-    def acceptance_rate(self):
-        return self._metachain.acceptance_rate()
+    def acceptance_fraction(self):
+        return self._metachain.acceptance_fraction()
 
     def get_chain(self):
         return self._metachain.chain()
@@ -93,7 +93,7 @@ class MetaChain():
     def extend(self, n):
         self._chain = np.concatenate((self._chain, np.zeros((n, self._dim))))
 
-    def acceptance_rate(self):
+    def acceptance_fraction(self):
         return self._n_accepted / (self._index+1)
 
     def dimensionality(self):
