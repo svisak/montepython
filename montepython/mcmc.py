@@ -12,18 +12,18 @@ class MCMC(ABC):
         self.lnlikelihood = lnlikelihood
 
         # Create chain and add startpos to it
-        self._chain = Chain(dim)
-        self._chain.extend(1)
-        self._chain.accept(startpos)
+        self._metachain = MetaChain(dim)
+        self._metachain.extend(1)
+        self._metachain.accept(startpos)
     
     def set_seed(self, seed):
         np.random.seed(seed)
 
     def acceptance_rate(self):
-        return self._chain.acceptance_rate()
+        return self._metachain.acceptance_rate()
 
-    def chain(self):
-        return self._chain.chain()
+    def get_chain(self):
+        return self._metachain.get_chain()
 
     def lnposterior(self, position):
         # CONVENIENCE
@@ -42,11 +42,15 @@ class MCMC(ABC):
         return lnprior_val + lnlikelihood_val
 
     @abstractmethod
+    def get_mcmc_type(self):
+        raise NotImplementedError("Unimplemented abstract method!")
+
+    @abstractmethod
     def run(self, n_steps):
         raise NotImplementedError("Unimplemented abstract method!")
 
 
-class Chain():
+class MetaChain():
 
     def __init__(self, dim):
         self._dim = dim
