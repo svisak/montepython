@@ -79,12 +79,59 @@ def plot_rwm(mcmc, stepsize):
     plt.ylabel(r'$q$')
     plt.title('Traceplot')
     plt.savefig('fig/{}_multimodal_traceplot_stepsize{}.pdf'.format(mcmc.get_mcmc_type(), stepsize), bbox_inches='tight')
+
+def get_n_modeswitches(chain):
+    n_switch = 0
+    for i in range(len(chain)-1):
+        if chain[i, :]*chain[i+1, :] < 0:
+            n_switch += 1
+    return n_switch
+
+def plot_modeswitch():
+    n_samples = 25000
+    k = 5
+    n_eps = []
+    epsilons = [0.1, 0.2, 0.3, 0.4, 0.5]
+    for eps in epsilons:
+        L = 100
+        n = 0
+        for i in range(k):
+            hmc = run_hmc(n_samples, gradient, L, eps, dim, startpos, lnprior, lnlikelihood)
+            n += get_n_modeswitches(hmc.get_chain())
+        n_eps.append(n/k)
+    np.save('n_eps', n_eps)
+    n_L = []
+    ells = [100, 200, 300, 400, 500]
+    for L in ells:
+        eps = 0.1
+        n = 0
+        for i in range(k):
+            hmc = run_hmc(n_samples, gradient, L, eps, dim, startpos, lnprior, lnlikelihood)
+            n += get_n_modeswitches(hmc.get_chain())
+        n_L.append(n/k)
+    np.save('n_L', n_L)
+    plt.figure(figsize=(8.0, 4.5))
+    plt.tight_layout()
+    plt.subplot(1,2,1)
+    eps_times_L = [10, 20, 30, 40, 50]
+    plt.plot(eps_times_L, n_eps)
+    plt.xlabel(r'$\epsilon L$')
+    plt.ylabel('Avg number of mode switches')
+    plt.title(r'{} HMC steps, {} repeats, $L$ fixed'.format(n_samples, k))
+    plt.subplot(1,2,2)
+    plt.plot(eps_times_L, n_L)
+    plt.xlabel(r'$\epsilon L$')
+    plt.ylabel('Avg number of mode switches')
+    plt.title(r'{} HMC steps, {} repeats, $\epsilon$ fixed'.format(n_samples, k))
+    plt.savefig('modeswitches.pdf', bbox_inches='tight')
     
-plot_likelihood(lnlikelihood)
-L = 50
-eps = 0.1
+
+#plot_likelihood(lnlikelihood)
+#L = 50
+#eps = 0.1
 #hmc = run_hmc(n_samples, gradient, L, eps, dim, startpos, lnprior, lnlikelihood)
 #plot(hmc, L, eps)
-stepsize = 7.0
-rwm = run_rwm(n_samples, stepsize, dim, startpos, lnprior, lnlikelihood)
-plot_rwm(rwm, stepsize)
+#stepsize = 7.0
+#rwm = run_rwm(n_samples, stepsize, dim, startpos, lnprior, lnlikelihood)
+#plot_rwm(rwm, stepsize)
+plot_modeswitch()
