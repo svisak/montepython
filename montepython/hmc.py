@@ -5,8 +5,17 @@ from .mcmc import MCMC
 import numpy as np
 
 class HMC(MCMC):
+    """
+    Implementation of the MCMC base class, using the Hamiltonian Monte Carlo
+    algorithm. Users should not use the methods in this class, instead use the
+    methods provided in the base class.
+
+    """
 
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
+        """
+        TODO Write a docstring.
+        """
         # POP OPTIONAL PARAMETERS
         self._save_momenta = kwargs.pop('save_momenta', False)
         self._temperature = kwargs.pop('temperature', 1) # TODO Make sure temperature != 1 works as intended
@@ -22,6 +31,14 @@ class HMC(MCMC):
         else:
             self._energy = Energy(self.lnposterior, mass_matrix)
         self._leapfrog = Leapfrog(gradient, ell, epsilon, self._energy)
+
+    def to_ugly_string(self):
+        n = self._metachain.steps_taken()
+        dim = self._metachain.dimensionality()
+        ell = self._leapfrog.get_ell()
+        eps = self._leapfrog.get_epsilon()
+        str = "hmc_N{}_dim{}_L{}_eps{}".format(n, dim, ell, eps)
+        return str
 
     def get_mcmc_type(self):
         return "HMC"
@@ -114,6 +131,14 @@ class Leapfrog():
     def draw_epsilon(self):
         return self._epsilon
         # return self.epsilon + 0.1*self.epsilon*np.random.rand()
+
+    def get_ell(self):
+        """Return the nominal number of steps used by the solver."""
+        return self._ell
+
+    def get_epsilon(self):
+        """Return the nominal step size used by the solver."""
+        return self._epsilon
 
     def solve(self, initial_state):
         position = initial_state.position()

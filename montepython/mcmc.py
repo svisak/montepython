@@ -4,6 +4,11 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 class MCMC(ABC):
+    """
+    Abstract MCMC base class.
+    This is the only class the user interacts with (beyond instantiation.)
+
+    """
 
     def __init__(self, dim, startpos, lnprior, lnlikelihood, args=[], kwargs={}):
         self.args = args
@@ -42,11 +47,23 @@ class MCMC(ABC):
         return lnprior_val + lnlikelihood_val
 
     @abstractmethod
+    def to_ugly_string(self):
+        """Return a description, suitable for filenames, of the MCMC object."""
+        raise NotImplementedError("Unimplemented abstract method!")
+
+    @abstractmethod
     def get_mcmc_type(self):
+        """Return a string with the name of the MCMC algorithm."""
         raise NotImplementedError("Unimplemented abstract method!")
 
     @abstractmethod
     def run(self, n_steps):
+        """
+        Run the MCMC algorithm.
+
+        :param n_steps: Number of MCMC steps to perform
+        :returns: Nothing
+        """
         raise NotImplementedError("Unimplemented abstract method!")
 
 
@@ -81,3 +98,6 @@ class MetaChain():
 
     def dimensionality(self):
         return self._dim
+
+    def steps_taken(self):
+        return self._index+1
