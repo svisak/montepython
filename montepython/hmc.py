@@ -81,8 +81,7 @@ class Energy():
         return -self._lnposterior(position)
 
     def kinetic(self, momentum):
-        tmp = np.matmul(self._inverse_mass_matrix, momentum)
-        kinetic_energy = np.matmul(momentum, tmp) / 2
+        kinetic_energy = (momentum @ self._inverse_mass_matrix @ momentum) / 2
         if np.isnan(kinetic_energy):
             raise ValueError('NaN: Energy.kinetic at momentum = {}'.format(momentum))
         return kinetic_energy
@@ -125,10 +124,9 @@ class Leapfrog():
         # SOLVE AND RETURN
         momentum = momentum - epsilon * self._gradient(position) / 2
         for i in range(ell):
-            tmp = np.matmul(self._energy.get_inverse_mass_matrix(), momentum)
-            position = position + epsilon * tmp
+            position += epsilon * self._energy.get_inverse_mass_matrix() @ momentum
             if (i != ell-1):
-                momentum = momentum - epsilon * self._gradient(position)
-        momentum = momentum - epsilon * self._gradient(position) / 2
+                momentum -= epsilon * self._gradient(position)
+        momentum -= epsilon * self._gradient(position) / 2
         momentum = -momentum
         return State(position, momentum)
