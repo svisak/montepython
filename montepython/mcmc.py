@@ -23,7 +23,7 @@ class MCMC(ABC):
         return self._metachain.acceptance_rate()
 
     def get_chain(self):
-        return self._metachain.get_chain()
+        return self._metachain.chain()
 
     def lnposterior(self, position):
         # CONVENIENCE
@@ -54,21 +54,21 @@ class MetaChain():
 
     def __init__(self, dim):
         self._dim = dim
-        self._chain = np.empty((0, self.dim))
+        self._chain = np.empty((0, self._dim))
         self._n_accepted = 0
         self._index = -1
 
     def accept(self, position):
-        self._chain[self.index+1, :] = position
+        self._chain[self._index+1, :] = position
         self._n_accepted += 1
         self._index += 1
 
     def reject(self):
-        self._chain[self.index+1, :] = self.head()
+        self._chain[self._index+1, :] = self.head()
         self._index += 1
 
     def head(self):
-        return self._chain[self.index, :]
+        return self._chain[self._index, :]
 
     def chain(self):
         return self._chain

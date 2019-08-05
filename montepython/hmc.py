@@ -9,7 +9,7 @@ class HMC(MCMC):
     def __init__(self, gradient, ell, epsilon, *args, **kwargs):
         # POP OPTIONAL PARAMETERS
         self._save_momenta = kwargs.pop('save_momenta', False)
-        self._temp = kwargs.pop('temp', 1) # TODO Make sure temp != 1 works as intended
+        self._temperature = kwargs.pop('temperature', 1) # TODO Make sure temperature != 1 works as intended
         mass_matrix = kwargs.pop('mass_matrix', None)
 
         # SEND THE REST OF THE PARAMETERS OFF TO BASE CLASS
@@ -18,50 +18,51 @@ class HMC(MCMC):
         # INSTANTIATE ENERGY AND LEAPFROG
         self._energy = None
         if None == mass_matrix:
-            self._energy = Energy(self.lnposterior, np.eye(self.chain.dimensionality()))
+            self._energy = Energy(self.lnposterior, np.eye(self._metachain.dimensionality()))
         else:
             self._energy = Energy(self.lnposterior, mass_matrix)
-        self._leapfrog = Leapfrog(gradient, ell, epsilon, self.energy)
+        self._leapfrog = Leapfrog(gradient, ell, epsilon, self._energy)
 
     def get_mcmc_type(self):
         return "HMC"
 
     def draw_momentum(self):
-        mean = np.zeros(self.chain.dimensionality())
-        cov = np.eye(self.chain.dimensionality())
+        mean = np.zeros(self._metachain.dimensionality())
+        cov = np.eye(self._metachain.dimensionality())
         return np.random.multivariate_normal(mean, cov)
 
     def run(self, n_steps):
-        self.chain.extend(n_steps)
+        self._metachain.extend(n_steps)
         for i in range(n_steps):
             # PROPOSE NEW STATE
-            current = State(self.chain.head(), self.draw_momentum())
-            proposed = self.leapfrog.solve(current)
+            current = State(self._metachain.head(), self.draw_momentum())
+            proposed = self._leapfrog.solve(current)
 
             # ACCEPTANCE PROBABILITY
-            current_energy = self.energy.hamiltonian(current)
-            proposed_energy = self.energy.hamiltonian(proposed)
-            metropolis_ratio = np.exp((current_energy - proposed_energy) / self.temp)
+            current_energy = self._energy.hamiltonian(current)
+            proposed_energy = self._energy.hamiltonian(proposed)
+            diff = current_energy - proposed_energy
+            metropolis_ratio = np.exp(diff / self._temperature)
             acceptance_probability = min(1, metropolis_ratio)
 
             # ACCEPT / REJECT
             if np.random.rand() < acceptance_probability:
-                self.chain.accept(proposed.position())
+                self._metachain.accept(proposed.position())
             else:
-                self.chain.reject()
+                self._metachain.reject()
 
 
 class State():
 
     def __init__(self, position, momentum):
-        self._pos = position
-        self._mom = momentum
+        self._position = position
+        self._momentum = momentum
 
     def position(self):
-        return self._pos
+        return self._position
 
     def momentum(self):
-        return self._mom
+        return self._momentum
 
 
 class Energy():
@@ -81,7 +82,8 @@ class Energy():
         return -self._lnposterior(position)
 
     def kinetic(self, momentum):
-        kinetic_energy = (momentum @ self._inverse_mass_matrix @ momentum) / 2
+        kinetic_energy = momentum @ self._inverse_mass_matrix @ momentum
+        kinetic_energy /= 2
         if np.isnan(kinetic_energy):
             raise ValueError('NaN: Energy.kinetic at momentum = {}'.format(momentum))
         return kinetic_energy

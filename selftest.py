@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from montepython.mcmc import Chain
+from montepython.mcmc import MetaChain
 from montepython.hmc import HMC, Energy, State
 from montepython.rwm import RWM
 from montepython import utils
@@ -10,24 +10,24 @@ class ChainTestCase(unittest.TestCase):
     def test_chain_init(self):
         for i in range(1, 4):
             with self.subTest(i=i):
-                chain = Chain(i)
-                self.assertEqual(chain.index, -1)
-                self.assertEqual(chain.get_chain().shape, (0,i))
+                metachain = MetaChain(i)
+                self.assertEqual(metachain._index, -1)
+                self.assertEqual(metachain.chain().shape, (0,i))
                 with self.assertRaises(ZeroDivisionError):
-                    chain.acceptance_rate()
+                    metachain.acceptance_rate()
 
     def test_accept_reject(self):
         for i in range(1, 6):
             with self.subTest(i=i):
-                chain = Chain(i)
-                chain.extend(10)
+                metachain = MetaChain(i)
+                metachain.extend(10)
                 q = np.random.multivariate_normal(np.zeros(i), np.eye(i))
-                chain.accept(q)
-                self.assertEqual(chain.acceptance_rate(), 1)
-                self.assertTrue((chain.head() == q).all())
-                chain.reject()
-                self.assertEqual(chain.acceptance_rate(), 0.5)
-                self.assertTrue((chain.head() == q).all())
+                metachain.accept(q)
+                self.assertEqual(metachain.acceptance_rate(), 1)
+                self.assertTrue((metachain.head() == q).all())
+                metachain.reject()
+                self.assertEqual(metachain.acceptance_rate(), 0.5)
+                self.assertTrue((metachain.head() == q).all())
 
 class MontePythonTestCase(unittest.TestCase):
 
@@ -83,7 +83,7 @@ class HMCTestCase(unittest.TestCase):
         self.hmc.run(50)
         self.assertEqual(len(self.hmc.get_chain()), 51)
         self.assertEqual(self.hmc.get_chain().shape, (51,10))
-        self.assertEqual(self.hmc.chain.index, 50)
+        self.assertEqual(self.hmc._metachain._index, 50)
 
 class RWMTestCase(unittest.TestCase):
 
@@ -105,7 +105,7 @@ class RWMTestCase(unittest.TestCase):
         self.rwm.run(25)
         self.assertEqual(len(self.rwm.get_chain()), 26)
         self.assertEqual(self.rwm.get_chain().shape, (26,2))
-        self.assertEqual(self.rwm.chain.index, 25)
+        self.assertEqual(self.rwm._metachain._index, 25)
 
 class UtilsTestCase(unittest.TestCase):
 

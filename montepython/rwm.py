@@ -8,20 +8,20 @@ class RWM(MCMC):
 
     def __init__(self, stepsize, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._covariance = stepsize * np.eye(self.chain.dimensionality())
+        self._covariance = stepsize * np.eye(self._metachain.dimensionality())
 
     def get_mcmc_type(self):
         return "RWM"
 
     def run(self, n_steps):
-        self._chain.extend(n_steps)
+        self._metachain.extend(n_steps)
         for i in range(n_steps):
             # PROPOSE NEW STATE
-            position = self._chain.head()
+            position = self._metachain.head()
             proposed_position = multivariate_normal(position, self._covariance)
 
             # ACCEPTANCE PROBABILITY
-            current_position = self._chain.head()
+            current_position = self._metachain.head()
             lnposterior_diff = self.lnposterior(proposed_position)
             lnposterior_diff -= self.lnposterior(current_position)
             metropolis_ratio = np.exp(lnposterior_diff)
@@ -29,6 +29,6 @@ class RWM(MCMC):
 
             # ACCEPT / REJECT
             if np.random.rand() < acceptance_probability:
-                self._chain.accept(proposed_position)
+                self._metachain.accept(proposed_position)
             else:
-                self._chain.reject()
+                self._metachain.reject()
