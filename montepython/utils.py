@@ -3,6 +3,7 @@
 
 import warnings
 import numpy as np
+import scipy
 
 def autocorrelation(chain, max_lag):
     dimensions = chain.shape[1]
@@ -23,16 +24,12 @@ def autocorrelation(chain, max_lag):
             acors[lag, dim] = np.dot(unshifted, shifted) / normalization
     return acors
 
+def exponential_function(lag, tao, offset):
+    return np.exp(-lag/tao) + offset
+
 def autocorrelation_time(acors):
-    n_dim = acors.shape[1]
-    c = 5 # A constant, see Sokal
-    for M in np.arange(10, 10000):
-        taus = np.zeros(n_dim)
-        for d in np.arange(n_dim):
-            taus[d] = 1 + 2*np.sum(acors[1:M, d])
-        if np.all(taus > 1.0) and M > c*taus.max():
-            return taus
-    raise ValueError('Could not compute autocorrelation time')
+    tao = scipy.optimize.curve_fit(exp_func, lags, acors)[0][0]
+    return tao
 
 def most_correlated(acors):
     taus = autocorrelation_time(acors)
