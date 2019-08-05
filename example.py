@@ -9,7 +9,7 @@ from matplotlib import cm
 
 dim = 2
 startpos = np.zeros(dim)
-n_samples = 10000
+n_samples = 100
 ell = 100
 epsilon = 0.3
 
@@ -27,11 +27,11 @@ def lnlikelihood(q):
 def gradient(q):
     return 0
 
-hmc = HMC(gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood)
+hmc = HMC(gradient=gradient, ell=ell, epsilon=epsilon, dim=dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
 hmc.set_seed(1234)
 hmc.run(n_samples)
 
-print(hmc.acceptance_rate())
+print(hmc.acceptance_fraction())
 chain = hmc.get_chain()
 
 # Put chain in histogram etc

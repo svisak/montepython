@@ -12,24 +12,27 @@ class HMC(MCMC):
 
     """
 
-    def __init__(self, gradient, ell, epsilon, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
-        TODO Write a docstring.
+        TODO Write docstring.
+        A KeyError will be raised if a mandatory keyword argument is missing.
+
         """
+        super().__init__(*args, **kwargs)
+
+        # POP MANDATORY PARAMETERS
+        gradient = kwargs.pop('gradient')
+        ell = kwargs.pop('ell')
+        epsilon = kwargs.pop('epsilon')
+
         # POP OPTIONAL PARAMETERS
         self._save_momenta = kwargs.pop('save_momenta', False)
         self._temperature = kwargs.pop('temperature', 1) # TODO Make sure temperature != 1 works as intended
-        mass_matrix = kwargs.pop('mass_matrix', None)
-
-        # SEND THE REST OF THE PARAMETERS OFF TO BASE CLASS
-        super().__init__(*args, **kwargs)
+        default_mass_matrix = np.eye(self._metachain.dimensionality())
+        mass_matrix = kwargs.pop('mass_matrix', default_mass_matrix)
 
         # INSTANTIATE ENERGY AND LEAPFROG
-        self._energy = None
-        if None == mass_matrix:
-            self._energy = Energy(self.lnposterior, np.eye(self._metachain.dimensionality()))
-        else:
-            self._energy = Energy(self.lnposterior, mass_matrix)
+        self._energy = Energy(self.lnposterior, mass_matrix)
         self._leapfrog = Leapfrog(gradient, ell, epsilon, self._energy)
 
     def to_ugly_string(self):

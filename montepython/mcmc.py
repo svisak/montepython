@@ -10,11 +10,16 @@ class MCMC(ABC):
 
     """
 
-    def __init__(self, dim, startpos, lnprior, lnlikelihood, args=[], kwargs={}):
-        self.args = args
-        self.kwargs = kwargs
-        self.lnprior = lnprior
-        self.lnlikelihood = lnlikelihood
+    def __init__(self,  args=[], **kwargs):
+        """
+        TODO Write docstring.
+        A KeyError will be raised if a mandatory keyword argument is missing.
+
+        """
+        dim = kwargs.pop('dim')
+        startpos = kwargs.pop('startpos')
+        self.lnprior = kwargs.pop('lnprior')
+        self.lnlikelihood = kwargs.pop('lnlikelihood')
 
         # Create chain and add startpos to it
         self._metachain = MetaChain(dim)

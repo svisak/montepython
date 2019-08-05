@@ -36,7 +36,7 @@ class MontePythonTestCase(unittest.TestCase):
             return x
         def lnlikelihood(x):
             return x
-        rwm = RWM(1, 1, 1, lnprior, lnlikelihood)
+        rwm = RWM(stepsize=1, dim=1, startpos=1, lnprior=lnprior, lnlikelihood=lnlikelihood)
         self.assertEqual(rwm.lnposterior(2), 4)
         self.assertEqual(rwm.lnposterior(np.NINF), np.NINF)
         with self.assertRaises(ValueError):
@@ -75,7 +75,7 @@ class HMCTestCase(unittest.TestCase):
         startpos = np.zeros(self.dim)
         ell = 1
         epsilon = 1.0
-        self.hmc = HMC(gradient, ell, epsilon, self.dim, startpos, lnprior, lnlikelihood)
+        self.hmc = HMC(gradient=gradient, ell=ell, epsilon=epsilon, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
 
     def test_chain_size(self):
         self.assertEqual(len(self.hmc.get_chain()), 1)
@@ -97,7 +97,7 @@ class RWMTestCase(unittest.TestCase):
         self.dim = 2
         startpos = np.zeros(self.dim)
         stepsize = 4.0
-        self.rwm = RWM(stepsize, self.dim, startpos, lnprior, lnlikelihood)
+        self.rwm = RWM(stepsize=stepsize, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
 
     def test_chain_size(self):
         self.assertEqual(len(self.rwm.get_chain()), 1)

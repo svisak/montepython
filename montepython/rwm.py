@@ -6,8 +6,9 @@ from numpy.random import multivariate_normal
 
 class RWM(MCMC):
 
-    def __init__(self, stepsize, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        stepsize = kwargs.pop('stepsize')
         self._covariance = stepsize * np.eye(self._metachain.dimensionality())
 
     def to_ugly_string(self):
