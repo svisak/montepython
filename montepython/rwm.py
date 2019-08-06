@@ -8,7 +8,7 @@ class RWM(MCMC):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        stepsize = kwargs.pop('stepsize')
+        stepsize = kwargs.pop('stepsize', 1.0)
         self._covariance = stepsize * np.eye(self._metachain.dimensionality())
 
     def to_ugly_string(self):

@@ -22,8 +22,8 @@ class HMC(MCMC):
 
         # POP MANDATORY PARAMETERS
         gradient = kwargs.pop('gradient')
-        ell = kwargs.pop('ell')
-        epsilon = kwargs.pop('epsilon')
+        ell = kwargs.pop('leapfrog_ell')
+        epsilon = kwargs.pop('leapfrog_epsilon')
 
         # POP OPTIONAL PARAMETERS
         self._save_momenta = kwargs.pop('save_momenta', False)
