@@ -10,6 +10,37 @@ class HMC(MCMC):
     algorithm. Users should not use the methods in this class, instead use the
     methods provided in the base class.
 
+    :param **kwargs:
+        All parameters for the MCMC sampler are supplied as keyword arguments.
+        The list below covers the ones that are specific to HMC; see the docu-
+        mentation for the base class for parameters common to every sampler.
+
+        Class parameters
+        ----------------
+        gradient:
+            A function that takes a vector in parameter space as input and
+            returns the gradient of the negative log posterior with respect
+            to the parameters for that position.
+
+        leapfrog_ell:
+            The nominal number of steps used by the leapfrog solver.
+
+        leapfrog_epsilon:
+            The nominal step length used by the leapfrog solver.
+
+        mass_matrix: (optional)
+            The HMC mass matrix to use. A dim x dim matrix.
+            [Do not use this yet, as mass matrices other than the default will
+            lead to incorrect results!]
+
+        save_momenta: (optional)
+            A boolean variable. If set to true the randomly drawn momenta will
+            be saved in a MetaChain object. Default: false.
+            [Currently unimplemented!]
+
+        temperature: (optional)
+            The sampling temperature. Default: 1. Use with caution for the moment!
+
     """
 
     def __init__(self, *args, **kwargs):

@@ -32,6 +32,6 @@ hmc.set_seed(1234)
 hmc.run(n_samples)
 
 print(hmc.acceptance_fraction())
-chain = hmc.get_chain()
+chain = hmc.chain()
 
 # Put chain in histogram etc
