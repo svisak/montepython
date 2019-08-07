@@ -44,11 +44,6 @@ class HMC(MCMC):
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        TODO Write docstring.
-        A KeyError will be raised if a mandatory keyword argument is missing.
-
-        """
         super().__init__(*args, **kwargs)
 
         # POP MANDATORY PARAMETERS
@@ -104,6 +99,7 @@ class HMC(MCMC):
 
 
 class State():
+    """Hold a position-momentum pair. For code clarity."""
 
     def __init__(self, position, momentum):
         self._position = position
@@ -117,6 +113,7 @@ class State():
 
 
 class Energy():
+    """Keep track of the energy expressions needed in HMC."""
 
     def __init__(self, lnposterior, mass_matrix):
         self._lnposterior = lnposterior
@@ -151,6 +148,7 @@ class Energy():
 
 
 class Leapfrog():
+    """Leapfrog solver for HMC."""
 
     def __init__(self, gradient, ell, epsilon, energy):
         self._gradient = gradient
