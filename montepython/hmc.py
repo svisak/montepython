@@ -69,6 +69,14 @@ class HMC(MCMC):
         str = "hmc_N{}_dim{}_L{}_eps{}".format(n, dim, ell, eps)
         return str
 
+    def to_pretty_string(self):
+        n = self._metachain.steps_taken()
+        dim = self._metachain.dimensionality()
+        ell = self._leapfrog.get_ell()
+        eps = self._leapfrog.get_epsilon()
+        str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, dim, ell, eps)
+        return str
+
     def get_mcmc_type(self):
         return "HMC"
 

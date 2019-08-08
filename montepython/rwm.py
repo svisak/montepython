@@ -18,6 +18,13 @@ class RWM(MCMC):
         str = "rwm_N{}_dim{}_stepsize{}".format(n, dim, stepsize)
         return str
 
+    def to_pretty_string(self):
+        n = self._metachain.steps_taken()
+        dim = self._metachain.dimensionality()
+        stepsize = self._covariance[0, 0]
+        str = "RWM, {} samples, stepsize {}".format(n, dim, stepsize)
+        return str
+
     def get_mcmc_type(self):
         return "RWM"
 

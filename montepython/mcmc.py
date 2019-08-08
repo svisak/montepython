@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 from abc import ABC, abstractmethod
 import numpy as np
 
@@ -36,6 +37,11 @@ class MCMC(ABC):
             returns the natural logarithm of the prior probability for that
             position.
 
+        batch_size:
+            If set, the Markov chain will be saved to disk every batch_size
+            samples. This is to prevent data loss in case of crashes, power
+            cuts etc.
+
     """
 
     def __init__(self,  args=[], **kwargs):
@@ -43,6 +49,7 @@ class MCMC(ABC):
         startpos = kwargs.pop('startpos')
         self.lnprior = kwargs.pop('lnprior')
         self.lnlikelihood = kwargs.pop('lnlikelihood')
+        self._batch_size = kwargs.pop('batch_size', sys.maxsize)
 
         # Create chain and add startpos to it
         self._metachain = MetaChain(dim)
@@ -80,6 +87,11 @@ class MCMC(ABC):
     @abstractmethod
     def to_ugly_string(self):
         """Return a description, suitable for filenames, of the MCMC object."""
+        raise NotImplementedError("Unimplemented abstract method!")
+
+    @abstractmethod
+    def to_pretty_string(self):
+        """Return a description, suitable for titles etc, of the MCMC object."""
         raise NotImplementedError("Unimplemented abstract method!")
 
     @abstractmethod
