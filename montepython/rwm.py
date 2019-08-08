@@ -12,14 +12,14 @@ class RWM(MCMC):
         self._covariance = stepsize * np.eye(self._metachain.dimensionality())
 
     def to_ugly_string(self):
-        n = self._metachain.steps_taken()
+        n = self._metachain.chain_length()
         dim = self._metachain.dimensionality()
         stepsize = self._covariance[0, 0]
         str = "rwm_N{}_dim{}_stepsize{}".format(n, dim, stepsize)
         return str
 
     def to_pretty_string(self):
-        n = self._metachain.steps_taken()
+        n = self._metachain.chain_length()
         dim = self._metachain.dimensionality()
         stepsize = self._covariance[0, 0]
         str = "RWM, {} samples, stepsize {}".format(n, dim, stepsize)

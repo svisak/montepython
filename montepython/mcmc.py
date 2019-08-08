@@ -38,16 +38,16 @@ class MCMC(ABC):
             position.
 
         save_to_disk:
-            Whether to save the Markov chain to disk. Default is False.
+            Whether to save the Markov chain to disk. Default: False.
 
-        batch_size:
-            If set, the sampling will be performed in bathes of size batch_size.
-            The chain will be saved to disk after every batch if save_to_disk
-            is True.
+        save_in_slices:
+            Whether to overwrite a previous chain backup with the new, longer,
+            chain (False), or to save batches in separate files (True).
+            Default: False. Overrides save_to_disk if set to True.
 
         batch_filename:
             The file to which the chain will be backed up if save_to_disk is True.
-            A default, "mcmc_chain_backup", is provided.
+            A default, based on run parameters, is provided.
 
     """
 
@@ -56,10 +56,13 @@ class MCMC(ABC):
         startpos = kwargs.pop('startpos')
         self.lnprior = kwargs.pop('lnprior')
         self.lnlikelihood = kwargs.pop('lnlikelihood')
+        self._save_in_slices = kwargs.pop('save_in_slices', False)
         self._save_to_disk = kwargs.pop('save_to_disk', False)
-        self._batch_size = kwargs.pop('batch_size', sys.maxsize)
-        self._batch_filename = kwargs.pop('batch_filename', 'mcmc_chain_backup')
+        if self._save_in_slices:
+            self._save_to_disk = True
+        self._batch_filename = kwargs.pop('batch_filename', None)
         self._metachain = MetaChain(dim, startpos)
+        self._n_batches = 0
 
     def set_seed(self, seed):
         """Set the numpy random seed."""
@@ -89,31 +92,45 @@ class MCMC(ABC):
         # OK, RETURN LN OF POSTERIOR
         return lnprior_val + lnlikelihood_val
 
-    def save_batch(self):
-        if self._save_to_disk:
-            print('Backing up chain to file {}'.format(self._batch_filename))
-            np.save(self._batch_filename, chain())
-        else:
-            pass
-
-    def run(self, n_samples):
+    def run(self, n_samples, batch_size=sys.maxsize):
         """
         Run the MCMC algorithm.
 
         :param n_samples: Number of MCMC steps to perform
+        :param batch_size: (optional) Do batch_size samples at a time
         :returns: Nothing
         """
         self._metachain.extend(n_samples)
-        while n_samples > self._batch_size:
-            self.run_batch(self._batch_size)
-            n_samples -= self._batch_size
-            self.save_batch()
-        self.run_batch(n_samples)
-        self.save_batch()
+        while n_samples > batch_size:
+            self._n_batches += 1
+            self._run_batch(batch_size)
+            n_samples -= batch_size
+        self._run_batch(n_samples)
 
-    def run_batch(self, batch_size):
-        for i in range(batch_size):
+    def _run_batch(self, n_samples):
+        for i in range(n_samples):
             self.sample()
+        if self._save_to_disk:
+            self._save_chain()
+
+    def _get_batch_filename(self):
+        batch_nr_str = None
+        if self._save_in_slices and 0 < self._n_batches:
+            batch_nr_str = '_{}'.format(self._n_batches)
+        else:
+            batch_nr_str = ''
+        if self._batch_filename is None:
+            return '{}{}'.format(self.to_ugly_string(), batch_nr_str)
+        else:
+            return '{}{}'.format(self._batch_filename, batch_nr_str)
+
+    def _save_chain(self):
+        if self._save_to_disk:
+            filename = self._get_batch_filename()
+            print('Saving chain to file {}'.format(filename))
+            np.save(filename, self.chain())
+        else:
+            pass
 
     @abstractmethod
     def sample(self):
@@ -199,6 +216,13 @@ class MetaChain():
 
         """
         return self._dim
+
+    def chain_length(self):
+        """
+        Return the length of the ndarray. This may include elements
+        that are not yet filled.
+        """
+        return self.chain().shape[0]
 
     def n_samples_taken(self):
         """

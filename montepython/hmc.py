@@ -62,7 +62,7 @@ class HMC(MCMC):
         self._leapfrog = Leapfrog(gradient, ell, epsilon, self._energy)
 
     def to_ugly_string(self):
-        n = self._metachain.steps_taken()
+        n = self._metachain.chain_length()
         dim = self._metachain.dimensionality()
         ell = self._leapfrog.get_ell()
         eps = self._leapfrog.get_epsilon()
@@ -70,7 +70,7 @@ class HMC(MCMC):
         return str
 
     def to_pretty_string(self):
-        n = self._metachain.steps_taken()
+        n = self._metachain.chain_length()
         dim = self._metachain.dimensionality()
         ell = self._leapfrog.get_ell()
         eps = self._leapfrog.get_epsilon()

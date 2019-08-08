@@ -29,7 +29,7 @@ class ChainTestCase(unittest.TestCase):
                 self.assertEqual(metachain.acceptance_fraction(), 0.5)
                 self.assertTrue((metachain.head() == q).all())
 
-class MontePythonTestCase(unittest.TestCase):
+class MCMCTestCase(unittest.TestCase):
 
     def test_lnposterior(self):
         def lnprior(x):
@@ -150,12 +150,12 @@ class BatchTestCase(unittest.TestCase):
         startpos = np.zeros(self.dim)
         ell = 1
         epsilon = 1.0
-        self.hmc = HMC(batch_size=10, gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
+        self.hmc = HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
 
     def test_chain_size(self):
         self.assertEqual(len(self.hmc.chain()), 1)
         self.assertEqual(self.hmc.chain().shape, (1,10))
-        self.hmc.run(52)
+        self.hmc.run(n_samples=52, batch_size=10)
         self.assertEqual(len(self.hmc.chain()), 53)
         self.assertEqual(self.hmc.chain().shape, (53,10))
         self.assertEqual(self.hmc._metachain._index, 52)
