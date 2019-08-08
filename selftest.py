@@ -134,5 +134,31 @@ class UtilsTestCase(unittest.TestCase):
             self.assertLess(np.abs(np.amin(acors[0, :]))-1, tol)
             self.assertLess(np.amax(acors[1:, :]), 0.05)
 
+class BatchTestCase(unittest.TestCase):
+
+    def setUp(self):
+        def lnprior(position):
+            return 1
+
+        def lnlikelihood(position):
+            return 1
+
+        def gradient(position):
+            return np.ones(self.dim)
+
+        self.dim = 10
+        startpos = np.zeros(self.dim)
+        ell = 1
+        epsilon = 1.0
+        self.hmc = HMC(batch_size=10, gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
+
+    def test_chain_size(self):
+        self.assertEqual(len(self.hmc.chain()), 1)
+        self.assertEqual(self.hmc.chain().shape, (1,10))
+        self.hmc.run(52)
+        self.assertEqual(len(self.hmc.chain()), 53)
+        self.assertEqual(self.hmc.chain().shape, (53,10))
+        self.assertEqual(self.hmc._metachain._index, 52)
+
 if __name__ == '__main__':
     unittest.main()

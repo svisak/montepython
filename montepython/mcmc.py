@@ -37,10 +37,17 @@ class MCMC(ABC):
             returns the natural logarithm of the prior probability for that
             position.
 
+        save_to_disk:
+            Whether to save the Markov chain to disk. Default is False.
+
         batch_size:
-            If set, the Markov chain will be saved to disk every batch_size
-            samples. This is to prevent data loss in case of crashes, power
-            cuts etc.
+            If set, the sampling will be performed in bathes of size batch_size.
+            The chain will be saved to disk after every batch if save_to_disk
+            is True.
+
+        batch_filename:
+            The file to which the chain will be backed up if save_to_disk is True.
+            A default, "mcmc_chain_backup", is provided.
 
     """
 
@@ -49,13 +56,11 @@ class MCMC(ABC):
         startpos = kwargs.pop('startpos')
         self.lnprior = kwargs.pop('lnprior')
         self.lnlikelihood = kwargs.pop('lnlikelihood')
+        self._save_to_disk = kwargs.pop('save_to_disk', False)
         self._batch_size = kwargs.pop('batch_size', sys.maxsize)
+        self._batch_filename = kwargs.pop('batch_filename', 'mcmc_chain_backup')
+        self._metachain = MetaChain(dim, startpos)
 
-        # Create chain and add startpos to it
-        self._metachain = MetaChain(dim)
-        self._metachain.extend(1)
-        self._metachain.accept(startpos)
-    
     def set_seed(self, seed):
         """Set the numpy random seed."""
         np.random.seed(seed)
@@ -84,6 +89,37 @@ class MCMC(ABC):
         # OK, RETURN LN OF POSTERIOR
         return lnprior_val + lnlikelihood_val
 
+    def save_batch(self):
+        if self._save_to_disk:
+            print('Backing up chain to file {}'.format(self._batch_filename))
+            np.save(self._batch_filename, chain())
+        else:
+            pass
+
+    def run(self, n_samples):
+        """
+        Run the MCMC algorithm.
+
+        :param n_samples: Number of MCMC steps to perform
+        :returns: Nothing
+        """
+        self._metachain.extend(n_samples)
+        while n_samples > self._batch_size:
+            self.run_batch(self._batch_size)
+            n_samples -= self._batch_size
+            self.save_batch()
+        self.run_batch(n_samples)
+        self.save_batch()
+
+    def run_batch(self, batch_size):
+        for i in range(batch_size):
+            self.sample()
+
+    @abstractmethod
+    def sample(self):
+        """Obtain a new sample from the distribution."""
+        raise NotImplementedError("Unimplemented abstract method!")
+
     @abstractmethod
     def to_ugly_string(self):
         """Return a description, suitable for filenames, of the MCMC object."""
@@ -99,16 +135,6 @@ class MCMC(ABC):
         """Return a string with the name of the MCMC algorithm."""
         raise NotImplementedError("Unimplemented abstract method!")
 
-    @abstractmethod
-    def run(self, n_steps):
-        """
-        Run the MCMC algorithm.
-
-        :param n_steps: Number of MCMC steps to perform
-        :returns: Nothing
-        """
-        raise NotImplementedError("Unimplemented abstract method!")
-
 
 class MetaChain():
     """
@@ -120,11 +146,20 @@ class MetaChain():
 
     """
 
-    def __init__(self, dim):
+    def __init__(self, dim, startpos=None):
         self._dim = dim
         self._chain = np.empty((0, self._dim))
         self._n_accepted = 0
         self._index = -1
+        if startpos is not None:
+            self.extend(1)
+            self.accept(startpos)
+
+    def reset(self, startpos=None):
+        if startpos is None:
+            self.__init__(self._dim, self.startpos())
+        else:
+            self.__init__(self._dim, startpos)
 
     def accept(self, position):
         """Add position to the chain and increment the index and accepted samples."""
@@ -140,6 +175,10 @@ class MetaChain():
     def head(self):
         """Return the latest sample in the chain."""
         return self._chain[self._index, :]
+
+    def startpos(self):
+        """Return the first sample in the chain."""
+        return self._chain[0, :]
 
     def chain(self):
         """Return the Markov chain."""

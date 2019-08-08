@@ -85,25 +85,23 @@ class HMC(MCMC):
         cov = np.eye(self._metachain.dimensionality())
         return np.random.multivariate_normal(mean, cov)
 
-    def run(self, n_steps):
-        self._metachain.extend(n_steps)
-        for i in range(n_steps):
-            # PROPOSE NEW STATE
-            current = State(self._metachain.head(), self.draw_momentum())
-            proposed = self._leapfrog.solve(current)
+    def sample(self):
+        # PROPOSE NEW STATE
+        current_state = State(self._metachain.head(), self.draw_momentum())
+        proposed_state = self._leapfrog.solve(current_state)
 
-            # ACCEPTANCE PROBABILITY
-            current_energy = self._energy.hamiltonian(current)
-            proposed_energy = self._energy.hamiltonian(proposed)
-            diff = current_energy - proposed_energy
-            metropolis_ratio = np.exp(diff / self._temperature)
-            acceptance_probability = min(1, metropolis_ratio)
+        # ACCEPTANCE PROBABILITY
+        current_energy = self._energy.hamiltonian(current_state)
+        proposed_energy = self._energy.hamiltonian(proposed_state)
+        diff = current_energy - proposed_energy
+        metropolis_ratio = np.exp(diff / self._temperature)
+        acceptance_probability = min(1, metropolis_ratio)
 
-            # ACCEPT / REJECT
-            if np.random.rand() < acceptance_probability:
-                self._metachain.accept(proposed.position())
-            else:
-                self._metachain.reject()
+        # ACCEPT / REJECT
+        if np.random.rand() < acceptance_probability:
+            self._metachain.accept(proposed_state.position())
+        else:
+            self._metachain.reject()
 
 
 class State():
