@@ -37,18 +37,6 @@ class MCMC(ABC):
             returns the natural logarithm of the prior probability for that
             position.
 
-        save_to_disk:
-            Whether to save the Markov chain to disk. Default: False.
-
-        save_in_slices:
-            Whether to overwrite a previous chain backup with the new, longer,
-            chain (False), or to save batches in separate files (True).
-            Default: False. Overrides save_to_disk if set to True.
-
-        batch_filename:
-            The file to which the chain will be backed up if save_to_disk is True.
-            A default, based on run parameters, is provided.
-
     """
 
     def __init__(self,  args=[], **kwargs):
@@ -56,13 +44,7 @@ class MCMC(ABC):
         startpos = kwargs.pop('startpos')
         self.lnprior = kwargs.pop('lnprior')
         self.lnlikelihood = kwargs.pop('lnlikelihood')
-        self._save_in_slices = kwargs.pop('save_in_slices', False)
-        self._save_to_disk = kwargs.pop('save_to_disk', False)
-        if self._save_in_slices:
-            self._save_to_disk = True
-        self._batch_filename = kwargs.pop('batch_filename', None)
         self._metachain = MetaChain(dim, startpos)
-        self._n_batches = 0
 
     def set_seed(self, seed):
         """Set the numpy random seed."""
@@ -92,45 +74,16 @@ class MCMC(ABC):
         # OK, RETURN LN OF POSTERIOR
         return lnprior_val + lnlikelihood_val
 
-    def run(self, n_samples, batch_size=sys.maxsize):
-        """
-        Run the MCMC algorithm.
-
-        :param n_samples: Number of MCMC steps to perform
-        :param batch_size: (optional) Do batch_size samples at a time
-        :returns: Nothing
-        """
-        self._metachain.extend(n_samples)
-        while n_samples > batch_size:
-            self._n_batches += 1
-            self._run_batch(batch_size)
-            n_samples -= batch_size
-        self._run_batch(n_samples)
-
-    def _run_batch(self, n_samples):
-        for i in range(n_samples):
-            self.sample()
-        if self._save_to_disk:
-            self._save_chain()
-
-    def _get_batch_filename(self):
-        batch_nr_str = None
-        if self._save_in_slices and 0 < self._n_batches:
-            batch_nr_str = '_{}'.format(self._n_batches)
+    # TODO Test loop vs recursion memory consumption
+    def run(self, n_samples, batch_size=sys.maxsize, filename=None):
+        if n_samples <= batch_size:
+            self._metachain.extend(n_samples)
+            for i in range(n_samples):
+                self.sample()
+            self._metachain.save_to_disk(filename)
         else:
-            batch_nr_str = ''
-        if self._batch_filename is None:
-            return '{}{}'.format(self.to_ugly_string(), batch_nr_str)
-        else:
-            return '{}{}'.format(self._batch_filename, batch_nr_str)
-
-    def _save_chain(self):
-        if self._save_to_disk:
-            filename = self._get_batch_filename()
-            print('Saving chain to file {}'.format(filename))
-            np.save(filename, self.chain())
-        else:
-            pass
+            self.run(batch_size, batch_size, filename)
+            self.run(n_samples-batch_size, batch_size, filename)
 
     @abstractmethod
     def sample(self):
@@ -230,3 +183,10 @@ class MetaChain():
         This can be useful for monitoring progress, and for unit testing.
         """
         return self._index+1
+
+    def save_to_disk(self, filename):
+        if filename is not None:
+            print('Saving chain to file {}'.format(filename))
+            np.save(filename, self.chain())
+        else:
+            pass
