@@ -27,7 +27,7 @@ def lnlikelihood(q):
 def gradient(q):
     return 0
 
-hmc = HMC(gradient=gradient, ell=ell, epsilon=epsilon, dim=dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
+hmc = HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
 hmc.set_seed(1234)
 hmc.run(n_samples)
 
