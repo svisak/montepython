@@ -5,23 +5,77 @@ from .mcmc import MCMC
 import numpy as np
 
 class HMC(MCMC):
+    """
+    Implementation of the MCMC base class, using the Hamiltonian Monte Carlo
+    algorithm. Users should not use the methods in this class, instead use the
+    methods provided in the base class.
 
-    def __init__(self, gradient, ell, epsilon, *args, **kwargs):
+    :param **kwargs:
+        All parameters for the MCMC sampler are supplied as keyword arguments.
+        The list below covers the ones that are specific to HMC; see the docu-
+        mentation for the base class for parameters common to every sampler.
+
+        Class parameters
+        ----------------
+        gradient:
+            A function that takes a vector in parameter space as input and
+            returns the gradient of the negative log posterior with respect
+            to the parameters for that position.
+
+        leapfrog_ell:
+            The nominal number of steps used by the leapfrog solver.
+
+        leapfrog_epsilon:
+            The nominal step length used by the leapfrog solver.
+
+        mass_matrix: (optional)
+            The HMC mass matrix to use. A dim x dim matrix.
+            [Do not use this yet, as mass matrices other than the default will
+            lead to incorrect results!]
+
+        save_momenta: (optional)
+            A boolean variable. If set to true the randomly drawn momenta will
+            be saved in a MetaChain object. Default: false.
+            [Currently unimplemented!]
+
+        temperature: (optional)
+            The sampling temperature. Default: 1. Use with caution for the moment!
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # POP MANDATORY PARAMETERS
+        gradient = kwargs.pop('gradient')
+        ell = kwargs.pop('leapfrog_ell')
+        epsilon = kwargs.pop('leapfrog_epsilon')
+
         # POP OPTIONAL PARAMETERS
         self._save_momenta = kwargs.pop('save_momenta', False)
         self._temperature = kwargs.pop('temperature', 1) # TODO Make sure temperature != 1 works as intended
-        mass_matrix = kwargs.pop('mass_matrix', None)
-
-        # SEND THE REST OF THE PARAMETERS OFF TO BASE CLASS
-        super().__init__(*args, **kwargs)
+        default_mass_matrix = np.eye(self._metachain.dimensionality())
+        mass_matrix = kwargs.pop('mass_matrix', default_mass_matrix)
 
         # INSTANTIATE ENERGY AND LEAPFROG
-        self._energy = None
-        if None == mass_matrix:
-            self._energy = Energy(self.lnposterior, np.eye(self._metachain.dimensionality()))
-        else:
-            self._energy = Energy(self.lnposterior, mass_matrix)
+        self._energy = Energy(self.lnposterior, mass_matrix)
         self._leapfrog = Leapfrog(gradient, ell, epsilon, self._energy)
+
+    def to_ugly_string(self):
+        n = self._metachain.chain_length()
+        dim = self._metachain.dimensionality()
+        ell = self._leapfrog.get_ell()
+        eps = self._leapfrog.get_epsilon()
+        str = "hmc_N{}_dim{}_L{}_eps{}".format(n, dim, ell, eps)
+        return str
+
+    def to_pretty_string(self):
+        n = self._metachain.chain_length()
+        dim = self._metachain.dimensionality()
+        ell = self._leapfrog.get_ell()
+        eps = self._leapfrog.get_epsilon()
+        str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, dim, ell, eps)
+        return str
 
     def get_mcmc_type(self):
         return "HMC"
@@ -31,28 +85,27 @@ class HMC(MCMC):
         cov = np.eye(self._metachain.dimensionality())
         return np.random.multivariate_normal(mean, cov)
 
-    def run(self, n_steps):
-        self._metachain.extend(n_steps)
-        for i in range(n_steps):
-            # PROPOSE NEW STATE
-            current = State(self._metachain.head(), self.draw_momentum())
-            proposed = self._leapfrog.solve(current)
+    def sample(self):
+        # PROPOSE NEW STATE
+        current_state = State(self._metachain.head(), self.draw_momentum())
+        proposed_state = self._leapfrog.solve(current_state)
 
-            # ACCEPTANCE PROBABILITY
-            current_energy = self._energy.hamiltonian(current)
-            proposed_energy = self._energy.hamiltonian(proposed)
-            diff = current_energy - proposed_energy
-            metropolis_ratio = np.exp(diff / self._temperature)
-            acceptance_probability = min(1, metropolis_ratio)
+        # ACCEPTANCE PROBABILITY
+        current_energy = self._energy.hamiltonian(current_state)
+        proposed_energy = self._energy.hamiltonian(proposed_state)
+        diff = current_energy - proposed_energy
+        metropolis_ratio = np.exp(diff / self._temperature)
+        acceptance_probability = min(1, metropolis_ratio)
 
-            # ACCEPT / REJECT
-            if np.random.rand() < acceptance_probability:
-                self._metachain.accept(proposed.position())
-            else:
-                self._metachain.reject()
+        # ACCEPT / REJECT
+        if np.random.rand() < acceptance_probability:
+            self._metachain.accept(proposed_state.position())
+        else:
+            self._metachain.reject()
 
 
 class State():
+    """Hold a position-momentum pair. For code clarity."""
 
     def __init__(self, position, momentum):
         self._position = position
@@ -66,6 +119,7 @@ class State():
 
 
 class Energy():
+    """Keep track of the energy expressions needed in HMC."""
 
     def __init__(self, lnposterior, mass_matrix):
         self._lnposterior = lnposterior
@@ -100,6 +154,7 @@ class Energy():
 
 
 class Leapfrog():
+    """Leapfrog solver for HMC."""
 
     def __init__(self, gradient, ell, epsilon, energy):
         self._gradient = gradient
@@ -114,6 +169,14 @@ class Leapfrog():
     def draw_epsilon(self):
         return self._epsilon
         # return self.epsilon + 0.1*self.epsilon*np.random.rand()
+
+    def get_ell(self):
+        """Return the nominal number of steps used by the solver."""
+        return self._ell
+
+    def get_epsilon(self):
+        """Return the nominal step size used by the solver."""
+        return self._epsilon
 
     def solve(self, initial_state):
         position = initial_state.position()

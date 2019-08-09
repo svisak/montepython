@@ -6,29 +6,42 @@ from numpy.random import multivariate_normal
 
 class RWM(MCMC):
 
-    def __init__(self, stepsize, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        stepsize = kwargs.pop('stepsize', 1.0)
         self._covariance = stepsize * np.eye(self._metachain.dimensionality())
+
+    def to_ugly_string(self):
+        n = self._metachain.chain_length()
+        dim = self._metachain.dimensionality()
+        stepsize = self._covariance[0, 0]
+        str = "rwm_N{}_dim{}_stepsize{}".format(n, dim, stepsize)
+        return str
+
+    def to_pretty_string(self):
+        n = self._metachain.chain_length()
+        dim = self._metachain.dimensionality()
+        stepsize = self._covariance[0, 0]
+        str = "RWM, {} samples, stepsize {}".format(n, dim, stepsize)
+        return str
 
     def get_mcmc_type(self):
         return "RWM"
 
-    def run(self, n_steps):
-        self._metachain.extend(n_steps)
-        for i in range(n_steps):
-            # PROPOSE NEW STATE
-            position = self._metachain.head()
-            proposed_position = multivariate_normal(position, self._covariance)
+    def sample(self):
+        # PROPOSE NEW STATE
+        position = self._metachain.head()
+        proposed_position = multivariate_normal(position, self._covariance)
 
-            # ACCEPTANCE PROBABILITY
-            current_position = self._metachain.head()
-            lnposterior_diff = self.lnposterior(proposed_position)
-            lnposterior_diff -= self.lnposterior(current_position)
-            metropolis_ratio = np.exp(lnposterior_diff)
-            acceptance_probability = min(1, metropolis_ratio)
+        # ACCEPTANCE PROBABILITY
+        current_position = self._metachain.head()
+        lnposterior_diff = self.lnposterior(proposed_position)
+        lnposterior_diff -= self.lnposterior(current_position)
+        metropolis_ratio = np.exp(lnposterior_diff)
+        acceptance_probability = min(1, metropolis_ratio)
 
-            # ACCEPT / REJECT
-            if np.random.rand() < acceptance_probability:
-                self._metachain.accept(proposed_position)
-            else:
-                self._metachain.reject()
+        # ACCEPT / REJECT
+        if np.random.rand() < acceptance_probability:
+            self._metachain.accept(proposed_position)
+        else:
+            self._metachain.reject()

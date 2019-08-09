@@ -2,13 +2,13 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from rwm import RWM
-from hmc import HMC
-from utils import autocorrelation
+from montepython.rwm import RWM
+from montepython.hmc import HMC
+from montepython.utils import autocorrelation
 
 var = 0.8
 mu = 4
-N = 10000
+N = 1000
 max_lag = 200
 
 # Specify distributions
@@ -36,48 +36,48 @@ def rwm_test():
     sigma = 3.0
     rwm = RWM(sigma, dim, startpos, lnprior, lnlikelihood)
     rwm.run(N)
-    print('Acceptance rate RWM: {}'.format(rwm.acceptance_rate()))
+    print('Acceptance rate RWM: {}'.format(rwm.acceptance_fraction()))
 
     plt.figure(figsize=(4.5, 3.0))
     plt.plot(x, y)
 
-    plt.hist(rwm.get_chain(), bins=300, density=True, stacked=True)
+    plt.hist(rwm.chain(), bins=300, density=True, stacked=True)
     plt.xlabel(r'$q$')
     plt.ylabel(r'$\pi(q)$')
-    plt.title(r'RWM, sigma $= {}$, acceptance\_rate $= {}$'.format(sigma, rwm.acceptance_rate()))
+    plt.title(r'RWM, sigma $= {}$, acceptance\_rate $= {}$'.format(sigma, rwm.acceptance_fraction()))
     plt.savefig('fig/rwm_sigma{}_N{}.pdf'.format(sigma, N), bbox_inches='tight')
 
     plt.figure(figsize=(4.5, 3.0))
     lags = np.arange(0, max_lag+1)
-    plt.plot(lags, autocorrelation(rwm.get_chain(), max_lag))
+    plt.plot(lags, autocorrelation(rwm.chain(), max_lag))
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
-    plt.title(r'Autocorrelation RWM, $\sigma = {}$, acceptance\_rate $= {}$'.format(sigma, rwm.acceptance_rate()))
+    plt.title(r'Autocorrelation RWM, $\sigma = {}$, acceptance\_rate $= {}$'.format(sigma, rwm.acceptance_fraction()))
     plt.savefig('fig/autocorr_rwm_sigma{}_N{}.pdf'.format(sigma, N), bbox_inches='tight')
 
 def hmc_test():
     ell = 200
     epsilon = 0.3
     #mass_matrix = 1.0*np.eye(dim)
-    #hmc = HMC(gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood, mass_matrix=mass_matrix)
-    hmc = HMC(gradient, ell, epsilon, dim, startpos, lnprior, lnlikelihood)
+    #hmc = HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood, mass_matrix=mass_matrix)
+    hmc = HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
     hmc.run(N)
-    print('Acceptance rate HMC: {}'.format(hmc.acceptance_rate()))
+    print('Acceptance rate HMC: {}'.format(hmc.acceptance_fraction()))
 
     plt.figure(figsize=(4.5, 3.0))
-    plt.hist(hmc.get_chain(), bins=300, density=True, stacked=True)
+    plt.hist(hmc.chain(), bins=300, density=True, stacked=True)
     plt.plot(x, y)
     plt.xlabel(r'$q$')
     plt.ylabel(r'$\pi(q)$')
-    plt.title(r'HMC, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(hmc.acceptance_rate(), ell, epsilon))
+    plt.title(r'HMC, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(hmc.acceptance_fraction(), ell, epsilon))
     plt.savefig('fig/hmc_L{}_eps{}_N{}.pdf'.format(ell, epsilon, N), bbox_inches='tight')
 
     plt.figure(figsize=(4.5, 3.0))
     lags = np.arange(0, max_lag+1)
-    plt.plot(lags, autocorrelation(hmc.get_chain(), max_lag))
+    plt.plot(lags, autocorrelation(hmc.chain(), max_lag))
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
-    plt.title(r'Autocorrelation HMC, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(hmc.acceptance_rate(), ell, epsilon))
+    plt.title(r'Autocorrelation HMC, acc\_rate $= {}, L = {}, \epsilon = {}$'.format(hmc.acceptance_fraction(), ell, epsilon))
     plt.savefig('fig/autocorr_hmc_L{}_eps{}_N{}.pdf'.format(ell, epsilon, N), bbox_inches='tight')
 
 #rwm_test()
