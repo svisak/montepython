@@ -10,6 +10,7 @@ class PyNSOPT():
     Example usage:
 
         pynsopt = PyNSOPT("ns-input.ini")
+        # Either
         pynsopt.read_lec_vector_from_inifile()
         # Or pynsopt.set_lec_vector(lec_ndarray)
         pynsopt.calculate()
@@ -17,7 +18,9 @@ class PyNSOPT():
         pynsopt.terminate()
     """
 
-    def __init__(self, inifile, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        inifile = kwargs.pop('inifile', "ns-input.ini")
+        inifile_path = kwargs.pop('inifile_path', ".")
         # FIND libnsopt.so
         libnsopt_so = c.util.find_library("nsopt")
         if libnsopt_so is None:
@@ -40,23 +43,19 @@ class PyNSOPT():
         # self._res will contain all needed information about the residuals (observables)
         self._nsopt = c.CDLL(libnsopt_so, c.RTLD_GLOBAL)
         self._res = self._nsopt.residual_mp_residual_list_
-        self._nsopt_init(inifile)
+        self._nsopt_init(inifile, inifile_path)
         self._allocate_res()
         self._lec_vector = self._create_lec_vector()
 
-    def _nsopt_init(self, inifile):
+    def _nsopt_init(self, inifile, inifile_path):
         # Initialize nsopt
         self._nsopt.program_startup_()
 
         # Load configuration
-        self._load_inifile(inifile)
+        self._nsopt.chp_ini_read_file_python_wrapper(self._nsopt.cfast_ini_get, str.encode(inifile_path), str.encode(inifile), self._ininow)
 
         # Prepare nsopt for calculations
         self._nsopt.program_initialization_()
-
-    def _load_inifile(self, inifile):
-        # Load configuration files
-        self._nsopt.chp_ini_read_file_python_wrapper(self._nsopt.cfast_ini_get, b".", str.encode(inifile), self._ininow)
 
     def load_configuration_option(self, option):
         """Add a single configuration option. Untested, use with caution."""
