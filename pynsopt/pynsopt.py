@@ -93,9 +93,9 @@ class PyNSOPT():
             self._nsopt.pounders_param_get_value_(c.byref(c.c_int(i)), c.byref(tmp))
             self._lec_vector[i] = tmp.value
     
-    def set_lec_vector(self, lec_numpy_array):
+    def set_lec_vector(self, lec_ndarray):
         for i in range(self._n_parameters):
-            self._lec_vector[i] = lec_numpy_array[i]
+            self._lec_vector[i] = lec_ndarray[i]
 
     def get_lec_vector(self):
         # TODO Check if self._lec_vector is an ndarray :)
@@ -108,10 +108,15 @@ class PyNSOPT():
         lec_name = str_buf.value.decode('ASCII').strip()
         return lec_name
 
-    def calculate(self):
-        # This function calculates all included observables and amplitudes
-        # using the LECs in self._lec_vector
-        # The resulting residual data is in self._res
+    def calculate(self, lec_ndarray=None):
+        """
+        Calculate all included observables and amplitudes using the LECs in
+        lec_ndarray (if provided), otherwise self._lec_vector (which can be set
+        with set_lec_vector().) The resulting residual data is stored in
+        self._res and should be accessed with the methods in this class.
+        """
+        if lec_ndarray is not None:
+            self.set_lec_vector(lec_ndarray)
         par_nr = c.c_int(self._n_parameters)
         self._nsopt.calc_chi_squared_master_(self._lec_vector, self._res, c.byref(par_nr))
 
