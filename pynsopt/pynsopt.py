@@ -3,6 +3,8 @@
 import ctypes as c
 import ctypes.util
 import sys
+import numpy as np
+import time
 
 class PyNSOPT():
     """
@@ -18,13 +20,13 @@ class PyNSOPT():
         pynsopt.terminate()
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, libnsopt_path=None, *args, **kwargs):
         inifile = kwargs.pop('inifile', "ns-input.ini")
         inifile_path = kwargs.pop('inifile_path', ".")
-        # FIND libnsopt.so
-        libnsopt_so = c.util.find_library("nsopt")
-        if libnsopt_so is None:
-            print('libnsopt.so not found, make sure it is in your LD_LIBRARY_PATH', file=sys.stderr)
+        if libnsopt_path is None:
+            libnsopt_path = c.util.find_library("nsopt")
+        if libnsopt_path is None:
+            print('libnsopt.so not found, make sure it is in your LD_LIBRARY_PATH, or supply it to the constructor', file=sys.stderr)
             sys.exit(1)
 
         # This is a DEFINE constant in the C/fortran-code so I can't access it, so define it here
@@ -41,7 +43,7 @@ class PyNSOPT():
         # residual_list is a derived fortran type so I can not use it directly in python.
         # That is why I created the global variable residual_list so that I have some space to use.
         # self._res will contain all needed information about the residuals (observables)
-        self._nsopt = c.CDLL(libnsopt_so, c.RTLD_GLOBAL)
+        self._nsopt = c.CDLL(libnsopt_path, c.RTLD_GLOBAL)
         self._res = self._nsopt.residual_mp_residual_list_
         self._nsopt_init(inifile, inifile_path)
         self._allocate_res()
@@ -98,13 +100,15 @@ class PyNSOPT():
             self._lec_vector[i] = lec_ndarray[i]
 
     def get_lec_vector(self):
-        # TODO Check if self._lec_vector is an ndarray :)
-        return self._lec_vector
+        lec_ndarray = np.empty(self.get_number_of_parameters())
+        for i in range(self._n_parameters):
+            lec_ndarray[i] = self._lec_vector[i]
+        return lec_ndarray
 
-    def get_lec_name(self, lec):
-        str_buf = c.create_string_buffer(str_buf_size)
+    def get_lec_name(self, lec_number):
         buf_size = 20
-        self._nsopt.pounders_param_get_name_(c.byref(c.c_int(lec)), str_buf, buf_size)
+        str_buf = c.create_string_buffer(buf_size)
+        self._nsopt.pounders_param_get_name_(c.byref(c.c_int(lec_number)), str_buf, buf_size)
         lec_name = str_buf.value.decode('ASCII').strip()
         return lec_name
 
@@ -129,10 +133,10 @@ class PyNSOPT():
     def get_number_of_extra_parameters(self):
         return self._n_extra_parameters
 
-    def get_residual_name(self, residual):
-        str_buf = c.create_string_buffer(str_buf_size)
+    def get_residual_name(self, residual_number):
         buf_size = 20
-        self._nsopt.residual_mp_get_residual_list_obs_(self._res, c.byref(c.c_int(residual+1)), str_buf)
+        str_buf = c.create_string_buffer(buf_size)
+        self._nsopt.residual_mp_get_residual_list_obs_(self._res, c.byref(c.c_int(residual_number+1)), str_buf)
         residual_name = str_buf.value.decode('ASCII').strip()
         return residual_name
 
@@ -140,15 +144,15 @@ class PyNSOPT():
         """Return the theoretical (i.e. calculated) value."""
         return self._get_double_val(self._nsopt.residual_mp_get_residual_list_theo_val_, residual_number)
 
-    def get_expe(self, residual):
+    def get_expe(self, residual_number):
         """Return experimental value."""
         return self._get_double_val(self._nsopt.residual_mp_get_residual_list_expe_, residual_number)
 
-    def get_exp_err_val(self, residual):
+    def get_exp_err_val(self, residual_number):
         """Return experimental error."""
         return self._get_double_val(self._nsopt.residual_mp_get_residual_list_exp_err_val_, residual_number)
 
-    def get_res_val(self, residual):
+    def get_res_val(self, residual_number):
         """Return residual value."""
         return self._get_double_val(self._nsopt.residual_mp_get_residual_list_res_val_, residual_number)
 
