@@ -50,14 +50,15 @@ class PyNSOPT():
         self._lec_vector = self._create_lec_vector()
 
     def _nsopt_init(self, inifile, inifile_path):
-        # Initialize nsopt
         self._nsopt.program_startup_()
-
-        # Load configuration
-        self._nsopt.chp_ini_read_file_python_wrapper(self._nsopt.cfast_ini_get, str.encode(inifile_path), str.encode(inifile), self._ininow)
-
-        # Prepare nsopt for calculations
+        b_path = str.encode(inifile_path)
+        b_file = str.encode(inifile)
+        self._nsopt.chp_ini_read_file_python_wrapper(self._nsopt.cfast_ini_get, b_path, b_file, self._ininow)
         self._nsopt.program_initialization_()
+
+    def terminate(self):
+        self._nsopt.residual_mp_deallocate_residual_list_type_(self._res)
+        self._nsopt.program_termination_()
 
     def load_configuration_option(self, option):
         """Add a single configuration option. Untested, use with caution."""
@@ -85,10 +86,6 @@ class PyNSOPT():
         lec_vector = par_vec_t(*par_vec)
         return lec_vector
 
-    def terminate(self):
-        self._nsopt.residual_mp_deallocate_residual_list_type_(self._res)
-        self._nsopt.program_termination_()
-
     def read_lec_vector_from_inifile(self):
         tmp = c.c_double(0)
         for i in range(self._n_parameters):
@@ -105,12 +102,17 @@ class PyNSOPT():
             lec_ndarray[i] = self._lec_vector[i]
         return lec_ndarray
 
-    def get_lec_name(self, lec_number):
-        buf_size = 20
+    def get_lec_name(self, lec_number, latex_math_mode=False):
+        buf_size = 40
         str_buf = c.create_string_buffer(buf_size)
         self._nsopt.pounders_param_get_name_(c.byref(c.c_int(lec_number)), str_buf, buf_size)
-        lec_name = str_buf.value.decode('ASCII').strip()
-        return lec_name
+        name = str_buf.value.decode('utf-8').strip()
+        name = name.replace('par.', '')
+        if latex_math_mode is True:
+            name = '$' + name + '}$'
+            name = name.replace('_', '_{')
+            name = name.replace('Ct', '\\widetilde{C}')
+        return name
 
     def calculate(self, lec_ndarray=None):
         """
@@ -137,7 +139,7 @@ class PyNSOPT():
         buf_size = 20
         str_buf = c.create_string_buffer(buf_size)
         self._nsopt.residual_mp_get_residual_list_obs_(self._res, c.byref(c.c_int(residual_number+1)), str_buf)
-        residual_name = str_buf.value.decode('ASCII').strip()
+        residual_name = str_buf.value.decode('utf-8').strip()
         return residual_name
 
     def get_theo_val(self, residual_number):
