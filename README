@@ -1,1 +1,14 @@
-Todo.
+INSTALLATION
+============
+
+Running
+
+  python setup.py install
+
+will install montepython to your site-packages directory.
+
+
+USAGE
+=====
+
+See examples/example.py.
