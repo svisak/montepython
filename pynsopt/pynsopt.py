@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
+import numpy as np
 import ctypes as c
 import ctypes.util
 import sys
-import numpy as np
 import time
+import os
+import contextlib
 
 class PyNSOPT():
     """
@@ -28,6 +30,8 @@ class PyNSOPT():
         if libnsopt_path is None:
             print('libnsopt.so not found, make sure it is in your LD_LIBRARY_PATH, or supply it to the constructor', file=sys.stderr)
             sys.exit(1)
+        if kwargs.pop('redirect', True) is True:
+            self._redirect()
 
         # This is a DEFINE constant in the C/fortran-code so I can't access it, so define it here
         self._ininow = c.c_int(2147483647)
@@ -59,6 +63,18 @@ class PyNSOPT():
     def terminate(self):
         self._nsopt.residual_mp_deallocate_residual_list_type_(self._res)
         self._nsopt.program_termination_()
+
+    def _redirect(self):
+        """Function that is called is the _init__ of PythonNsopt and is used to
+        redirect most of the output of nsopt to /dev/null
+        """
+        print('Redirecting NSOPT stdout to /dev/null')
+        sys.stdout.flush() # <--- important when redirecting to files
+        newstdout = os.dup(sys.stdout.fileno())
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        os.close(devnull)
+        sys.stdout = os.fdopen(newstdout, 'w')
 
     def load_configuration_option(self, option):
         """Add a single configuration option. Untested, use with caution."""
