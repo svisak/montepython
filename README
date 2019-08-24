@@ -6,9 +6,62 @@ Running
   python setup.py install
 
 will install montepython to your site-packages directory.
+Alternatively, if you don't have write permission to the default site-packages directory, you can do
+
+  python setup.py install --user
 
 
 USAGE
 =====
 
-See examples/example.py.
+Import:
+
+  import montepython
+  import numpy as np
+
+Set some run parameters:
+
+  dim = 2
+  startpos = np.zeros(dim)
+  ell = 100
+  epsilon = 0.3
+
+Define the (log) prior, likelihood, and gradient functions:
+
+  def lnprior(q):
+      return 0
+
+  # A simple box distribution
+  def lnlikelihood(q):
+      if np.amax(np.abs(q)) < 5:
+          return 0
+      else:
+          return np.NINF
+
+  def gradient(q):
+      return 0
+
+(Note: the gradient function will probably be changed to be the gradient of the ordinary posterior, as opposed to the NLP, in the future. Also, there will probably be an option to sample non-Bayesian pdf's.)
+
+Initialize the sampler:
+
+  hmc = montepython.HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=dim, startpos=startpos, lnprior=lnprior,  lnlikelihood=lnlikelihood)
+
+And run it:
+
+  n_samples = 100
+  hmc.run(n_samples)
+
+If it turns out that n_samples samples wasn't enough, you can continue where you left off:
+
+  some_more_samples = 2000
+  hmc.run(some_more_samples)
+  # The length of the chain is now n_samples+some_more_samples.
+
+Access some information:
+
+  print(hmc.acceptance_fraction())
+  chain = hmc.chain()
+
+The chain object is a numpy ndarray, which you can now put in a histogram, etc.
+See the methods in the MCMC class for other information that you can access.
