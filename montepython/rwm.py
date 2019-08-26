@@ -37,8 +37,14 @@ class RWM(MCMC):
         current_position = self._metachain.head()
         lnposterior_diff = self.lnposterior(proposed_position)
         lnposterior_diff -= self.lnposterior(current_position)
-        metropolis_ratio = np.exp(lnposterior_diff)
-        acceptance_probability = min(1, metropolis_ratio)
+        # Let 1 be the maximum value of the Metropolis ratio
+        # This is to prevent numerical issues since lnposterior_diff
+        # can be a large positive number
+        metropolis_ratio = 1
+        if 0 > lnposterior_diff:
+            metropolis_ratio = np.exp(lnposterior_diff)
+        # Technically the acceptance probability is min(1, metropolis_ratio)
+        acceptance_probability = metropolis_ratio
 
         # ACCEPT / REJECT
         if np.random.rand() < acceptance_probability:
