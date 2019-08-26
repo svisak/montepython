@@ -10,6 +10,7 @@ class RWM(MCMC):
         super().__init__(*args, **kwargs)
         stepsize = kwargs.pop('stepsize', 1.0)
         self._covariance = stepsize * np.eye(self._metachain.dimensionality())
+        self._current_lnposterior_value = None
 
     def to_ugly_string(self):
         n = self._metachain.chain_length()
@@ -28,6 +29,12 @@ class RWM(MCMC):
     def get_mcmc_type(self):
         return "RWM"
 
+    def _get_current_lnposterior_value(self, current_position):
+        if self._current_lnposterior_value is None:
+            return self.lnposterior(current_position)
+        else:
+            return self._current_lnposterior_value
+
     def sample(self):
         # PROPOSE NEW STATE
         position = self._metachain.head()
@@ -35,8 +42,9 @@ class RWM(MCMC):
 
         # ACCEPTANCE PROBABILITY
         current_position = self._metachain.head()
-        lnposterior_diff = self.lnposterior(proposed_position)
-        lnposterior_diff -= self.lnposterior(current_position)
+        proposed_value = self.lnposterior(proposed_position)
+        current_value = self._get_current_lnposterior_value(current_position)
+        lnposterior_diff = proposed_value - current_value
         # Let 1 be the maximum value of the Metropolis ratio
         # This is to prevent numerical issues since lnposterior_diff
         # can be a large positive number
@@ -49,5 +57,6 @@ class RWM(MCMC):
         # ACCEPT / REJECT
         if np.random.rand() < acceptance_probability:
             self._metachain.accept(proposed_position)
+            self._current_lnposterior_value = proposed_value
         else:
             self._metachain.reject()
