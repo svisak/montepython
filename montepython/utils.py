@@ -6,11 +6,11 @@ import numpy as np
 import scipy
 
 def autocorrelation(chain, max_lag):
-    dimensions = chain.shape[1]
-    acors = np.empty((max_lag+1, dimensions))
+    ndim = chain.shape[1]
+    acors = np.empty((max_lag+1, ndim))
     if max_lag > len(chain)/5:
         warnings.warn('max_lag is more than one fifth the chain length')
-    for dim in range(dimensions):
+    for dim in range(ndim):
         chain1d = chain[:, dim] - np.average(chain[:, dim])
         for lag in range(max_lag+1):
             unshifted = None
@@ -34,8 +34,8 @@ def autocorrelation_time(acors):
 def most_correlated(acors):
     maximum = 0
     most = -1
-    dimensions = acors.shape[1]
-    for dim in range(dim):
+    ndim = acors.shape[1]
+    for dim in range(ndim):
         total = np.sum(np.abs(acors[:, dim]))
         if np.abs(total) > maximum:
             maximum = total

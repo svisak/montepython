@@ -20,12 +20,12 @@ class MCMC(ABC):
 
         Common
         ------
-        dim:
+        ndim:
             The number of dimensions in parameter space.
 
         startpos:
             The starting position of the Markov chain. This should be a
-            vector of length dim.
+            vector of length ndim.
 
         lnprior:
             A function that takes a vector in the parameter space as input and
@@ -40,11 +40,11 @@ class MCMC(ABC):
     """
 
     def __init__(self,  args=[], **kwargs):
-        dim = kwargs.pop('dim')
+        ndim = kwargs.pop('ndim')
         startpos = kwargs.pop('startpos')
         self.lnprior = kwargs.pop('lnprior')
         self.lnlikelihood = kwargs.pop('lnlikelihood')
-        self._metachain = MetaChain(dim, startpos)
+        self._metachain = MetaChain(ndim, startpos)
         self._current_value = None
 
     def set_seed(self, seed):
@@ -124,9 +124,9 @@ class MetaChain():
 
     """
 
-    def __init__(self, dim, startpos):
-        self._dim = dim
-        self._chain = np.empty((0, self._dim))
+    def __init__(self, ndim, startpos):
+        self._ndim = ndim
+        self._chain = np.empty((0, self._ndim))
         self._n_accepted = 0
         self._index = -1
 
@@ -135,7 +135,7 @@ class MetaChain():
         self.accept(startpos)
 
     def reset(self):
-        self.__init__(self._dim, self.startpos())
+        self.__init__(self._ndim, self.startpos())
 
     def accept(self, position):
         """Add position to the chain and increment the index and accepted samples."""
@@ -162,7 +162,7 @@ class MetaChain():
 
     def extend(self, n):
         """Extend _chain to accommodate upcoming samples."""
-        self._chain = np.concatenate((self._chain, np.empty((n, self._dim))))
+        self._chain = np.concatenate((self._chain, np.empty((n, self._ndim))))
 
     def acceptance_fraction(self):
         """Return the current acceptance fraction."""
@@ -174,7 +174,7 @@ class MetaChain():
         the number of sampled parameters.
 
         """
-        return self._dim
+        return self._ndim
 
     def chain_length(self):
         """

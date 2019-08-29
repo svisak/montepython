@@ -29,7 +29,7 @@ class HMC(MCMC):
             The nominal step length used by the leapfrog solver.
 
         mass_matrix: (optional)
-            The HMC mass matrix to use. A dim x dim matrix.
+            The HMC mass matrix to use. A ndim x ndim matrix.
             [Do not use this yet, as mass matrices other than the default will
             lead to incorrect results!]
 
@@ -67,18 +67,18 @@ class HMC(MCMC):
 
     def to_ugly_string(self):
         n = self._metachain.chain_length()
-        dim = self._metachain.dimensionality()
+        ndim = self._metachain.dimensionality()
         ell = self._leapfrog.get_ell()
         eps = self._leapfrog.get_epsilon()
-        str = "hmc_N{}_dim{}_L{}_eps{}".format(n, dim, ell, eps)
+        str = "hmc_N{}_ndim{}_L{}_eps{}".format(n, ndim, ell, eps)
         return str
 
     def to_pretty_string(self):
         n = self._metachain.chain_length()
-        dim = self._metachain.dimensionality()
+        ndim = self._metachain.dimensionality()
         ell = self._leapfrog.get_ell()
         eps = self._leapfrog.get_epsilon()
-        str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, dim, ell, eps)
+        str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, ndim, ell, eps)
         return str
 
     def get_mass_matrix(self):

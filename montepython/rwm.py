@@ -17,16 +17,16 @@ class RWM(MCMC):
 
     def to_ugly_string(self):
         n = self._metachain.chain_length()
-        dim = self._metachain.dimensionality()
+        ndim = self._metachain.dimensionality()
         stepsize = self._covariance[0, 0]
-        str = "rwm_N{}_dim{}_stepsize{}".format(n, dim, stepsize)
+        str = "rwm_N{}_ndim{}_stepsize{}".format(n, ndim, stepsize)
         return str
 
     def to_pretty_string(self):
         n = self._metachain.chain_length()
-        dim = self._metachain.dimensionality()
+        ndim = self._metachain.dimensionality()
         stepsize = self._covariance[0, 0]
-        str = "RWM, {} samples, stepsize {}".format(n, dim, stepsize)
+        str = "RWM, {} samples, stepsize {}".format(n, ndim, stepsize)
         return str
 
     def get_mcmc_type(self):
