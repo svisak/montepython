@@ -55,11 +55,15 @@ class HMC(MCMC):
         self._save_momenta = kwargs.pop('save_momenta', False)
         self._temperature = kwargs.pop('temperature', 1) # TODO Make sure temperature != 1 works as intended
         default_mass_matrix = np.eye(self._metachain.dimensionality())
-        mass_matrix = kwargs.pop('mass_matrix', default_mass_matrix)
+        self._mass_matrix = kwargs.pop('mass_matrix', default_mass_matrix)
+        self._inverse_mass_matrix = np.linalg.inv(self._mass_matrix)
 
         # INSTANTIATE ENERGY AND LEAPFROG
-        self._energy = Energy(self.lnposterior, mass_matrix)
-        self._leapfrog = Leapfrog(gradient, ell, epsilon, self._energy)
+        self._leapfrog = Leapfrog(gradient, ell, epsilon, self._inverse_mass_matrix)
+
+        # CALCULATE VALUE OF POTENTIAL AT STARTPOS
+        tmp = self.potential(self._metachain.startpos())
+        self._remember_value(tmp)
 
     def to_ugly_string(self):
         n = self._metachain.chain_length()
@@ -77,8 +81,32 @@ class HMC(MCMC):
         str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, dim, ell, eps)
         return str
 
+    def get_mass_matrix(self):
+        return self._mass_matrix
+
+    def get_inverse_mass_matrix(self):
+        return self._inverse_mass_matrix
+
     def get_mcmc_type(self):
         return "HMC"
+
+    def potential(self, position):
+        return -self.lnposterior(position)
+
+    def kinetic(self, momentum):
+        kinetic_energy = momentum @ self.get_inverse_mass_matrix() @ momentum
+        kinetic_energy /= 2
+        if np.isnan(kinetic_energy):
+            raise ValueError('NaN: Energy.kinetic at momentum = {}'.format(momentum))
+        return kinetic_energy
+
+    def hamiltonian(self, potential_energy, kinetic_energy):
+        if np.isinf(potential_energy):
+            return potential_energy
+        elif np.isinf(kinetic_energy):
+            return kinetic_energy
+        else:
+            return potential_energy + kinetic_energy
 
     def draw_momentum(self):
         mean = np.zeros(self._metachain.dimensionality())
@@ -91,8 +119,12 @@ class HMC(MCMC):
         proposed_state = self._leapfrog.solve(current_state)
 
         # ACCEPTANCE PROBABILITY
-        current_energy = self._energy.hamiltonian(current_state)
-        proposed_energy = self._energy.hamiltonian(proposed_state)
+        current_potential = self._recall_value()
+        current_kinetic = self.kinetic(current_state.momentum())
+        current_energy = self.hamiltonian(current_potential, current_kinetic)
+        proposed_potential = self.potential(proposed_state.position())
+        proposed_kinetic = self.kinetic(proposed_state.momentum())
+        proposed_energy = self.hamiltonian(proposed_potential, proposed_kinetic)
         diff = current_energy - proposed_energy
         metropolis_ratio = np.exp(diff / self._temperature)
         acceptance_probability = min(1, metropolis_ratio)
@@ -100,6 +132,7 @@ class HMC(MCMC):
         # ACCEPT / REJECT
         if np.random.rand() < acceptance_probability:
             self._metachain.accept(proposed_state.position())
+            self._remember_value(proposed_potential)
         else:
             self._metachain.reject()
 
@@ -118,49 +151,14 @@ class State():
         return self._momentum
 
 
-class Energy():
-    """Keep track of the energy expressions needed in HMC."""
-
-    def __init__(self, lnposterior, mass_matrix):
-        self._lnposterior = lnposterior
-        self._mass_matrix = mass_matrix
-        self._inverse_mass_matrix = np.linalg.inv(mass_matrix)
-
-    def get_mass_matrix(self):
-        return self._mass_matrix
-
-    def get_inverse_mass_matrix(self):
-        return self._inverse_mass_matrix
-
-    def potential(self, position):
-        return -self._lnposterior(position)
-
-    def kinetic(self, momentum):
-        kinetic_energy = momentum @ self._inverse_mass_matrix @ momentum
-        kinetic_energy /= 2
-        if np.isnan(kinetic_energy):
-            raise ValueError('NaN: Energy.kinetic at momentum = {}'.format(momentum))
-        return kinetic_energy
-
-    def hamiltonian(self, state):
-        potential_energy = self.potential(state.position())
-        kinetic_energy = self.kinetic(state.momentum())
-        if np.isinf(potential_energy):
-            return potential_energy
-        elif np.isinf(kinetic_energy):
-            return kinetic_energy
-        else:
-            return potential_energy + kinetic_energy
-
-
 class Leapfrog():
     """Leapfrog solver for HMC."""
 
-    def __init__(self, gradient, ell, epsilon, energy):
+    def __init__(self, gradient, ell, epsilon, inverse_mass_matrix):
         self._gradient = gradient
         self._ell = ell
         self._epsilon = epsilon
-        self._energy = energy
+        self._inverse_mass_matrix = inverse_mass_matrix
 
     def draw_ell(self):
         return self._ell
@@ -189,7 +187,7 @@ class Leapfrog():
         # SOLVE AND RETURN
         momentum = momentum - epsilon * self._gradient(position) / 2
         for i in range(ell):
-            position += epsilon * self._energy.get_inverse_mass_matrix() @ momentum
+            position += epsilon * self._inverse_mass_matrix @ momentum
             if (i != ell-1):
                 momentum -= epsilon * self._gradient(position)
         momentum -= epsilon * self._gradient(position) / 2

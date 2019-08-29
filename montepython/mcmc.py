@@ -45,6 +45,7 @@ class MCMC(ABC):
         self.lnprior = kwargs.pop('lnprior')
         self.lnlikelihood = kwargs.pop('lnlikelihood')
         self._metachain = MetaChain(dim, startpos)
+        self._current_value = None
 
     def set_seed(self, seed):
         """Set the numpy random seed."""
@@ -73,6 +74,13 @@ class MCMC(ABC):
 
         # OK, RETURN LN OF POSTERIOR
         return lnprior_val + lnlikelihood_val
+
+    # USED INTERNALLY TO REMEMBER PREVIOUSLY COMPUTED POSTERIOR VALUE
+    def _remember_value(self, value):
+        self._current_value = value
+
+    def _recall_value(self):
+        return self._current_value
 
     # TODO Test loop vs recursion memory consumption
     def run(self, n_samples, batch_size=sys.maxsize, filename=None):
@@ -116,20 +124,18 @@ class MetaChain():
 
     """
 
-    def __init__(self, dim, startpos=None):
+    def __init__(self, dim, startpos):
         self._dim = dim
         self._chain = np.empty((0, self._dim))
         self._n_accepted = 0
         self._index = -1
-        if startpos is not None:
-            self.extend(1)
-            self.accept(startpos)
 
-    def reset(self, startpos=None):
-        if startpos is None:
-            self.__init__(self._dim, self.startpos())
-        else:
-            self.__init__(self._dim, startpos)
+        # ADD START POSITION
+        self.extend(1)
+        self.accept(startpos)
+
+    def reset(self):
+        self.__init__(self._dim, self.startpos())
 
     def accept(self, position):
         """Add position to the chain and increment the index and accepted samples."""
@@ -156,7 +162,7 @@ class MetaChain():
 
     def extend(self, n):
         """Extend _chain to accommodate upcoming samples."""
-        self._chain = np.concatenate((self._chain, np.zeros((n, self._dim))))
+        self._chain = np.concatenate((self._chain, np.empty((n, self._dim))))
 
     def acceptance_fraction(self):
         """Return the current acceptance fraction."""

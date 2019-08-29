@@ -65,3 +65,13 @@ Access some information:
 
 The chain object is a numpy ndarray, which you can now put in a histogram, etc.
 See the methods in the MCMC class for other information that you can access.
+
+
+VERSION
+=======
+
+Use
+
+  montepython.__version__
+
+to get the current version as a string.

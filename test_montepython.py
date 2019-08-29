@@ -3,7 +3,7 @@
 import unittest
 import numpy as np
 from montepython.mcmc import MetaChain
-from montepython.hmc import HMC, Energy, State
+from montepython.hmc import HMC, State
 from montepython.rwm import RWM
 from montepython import utils
 
@@ -12,24 +12,27 @@ class ChainTestCase(unittest.TestCase):
     def test_chain_init(self):
         for i in range(1, 4):
             with self.subTest(i=i):
-                metachain = MetaChain(i)
-                self.assertEqual(metachain._index, -1)
-                self.assertEqual(metachain.chain().shape, (0,i))
-                with self.assertRaises(ZeroDivisionError):
-                    metachain.acceptance_fraction()
+                metachain = MetaChain(i, self.randpos(i))
+                self.assertEqual(metachain._index, 0)
+                self.assertEqual(metachain.chain().shape, (1,i))
+                self.assertEqual(metachain.acceptance_fraction(), 1)
 
     def test_accept_reject(self):
         for i in range(1, 6):
             with self.subTest(i=i):
-                metachain = MetaChain(i)
-                metachain.extend(10)
-                q = np.random.multivariate_normal(np.zeros(i), np.eye(i))
-                metachain.accept(q)
+                q = self.randpos(i)
+                metachain = MetaChain(i, q)
                 self.assertEqual(metachain.acceptance_fraction(), 1)
-                self.assertTrue((metachain.head() == q).all())
+                metachain.extend(10)
                 metachain.reject()
                 self.assertEqual(metachain.acceptance_fraction(), 0.5)
                 self.assertTrue((metachain.head() == q).all())
+                q = self.randpos(i)
+                metachain.accept(q)
+                self.assertTrue((metachain.head() == q).all())
+
+    def randpos(self, ndim):
+        return np.random.multivariate_normal(np.zeros(ndim), np.eye(ndim))
 
 class MCMCTestCase(unittest.TestCase):
 
@@ -43,23 +46,6 @@ class MCMCTestCase(unittest.TestCase):
         self.assertEqual(rwm.lnposterior(np.NINF), np.NINF)
         with self.assertRaises(ValueError):
             rwm.lnposterior(np.nan)
-
-class EnergyTestCase(unittest.TestCase):
-
-    def setUp(self):
-        def lnposterior(position):
-            return 2
-        self.dim = 10
-        self.energy = Energy(lnposterior, np.eye(self.dim))
-
-    def test_potential(self):
-        self.assertEqual(self.energy.potential(0), -2)
-
-    def test_hamiltonian(self):
-        position = 0
-        momentum = 2*np.ones(self.dim)
-        state = State(position, momentum)
-        self.assertEqual(self.energy.hamiltonian(state), 18)
 
 class HMCTestCase(unittest.TestCase):
 
@@ -86,6 +72,16 @@ class HMCTestCase(unittest.TestCase):
         self.assertEqual(len(self.hmc.chain()), 51)
         self.assertEqual(self.hmc.chain().shape, (51,10))
         self.assertEqual(self.hmc._metachain._index, 50)
+
+    def test_potential(self):
+        self.assertEqual(self.hmc.potential(0), -2)
+
+    def test_hamiltonian(self):
+        position = 0
+        momentum = 2*np.ones(self.dim)
+        potential = self.hmc.potential(position)
+        kinetic = self.hmc.kinetic(momentum)
+        self.assertEqual(self.hmc.hamiltonian(potential, kinetic), 18)
 
 class RWMTestCase(unittest.TestCase):
 
