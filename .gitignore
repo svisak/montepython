@@ -3,3 +3,4 @@ montepython.egg-info
 build
 dist
 montepython/__pycache__
+VERSION
