@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import sys
 from abc import ABC, abstractmethod
 import numpy as np
+import sys
 
 class MCMC(ABC):
     """
@@ -82,16 +82,11 @@ class MCMC(ABC):
     def _recall_value(self):
         return self._current_value
 
-    # TODO Test loop vs recursion memory consumption
-    def run(self, n_samples, batch_size=sys.maxsize, filename=None):
-        if n_samples <= batch_size:
-            self._metachain.extend(n_samples)
-            for i in range(n_samples):
-                self.sample()
-            self._metachain.save_to_disk(filename)
-        else:
-            self.run(batch_size, batch_size, filename)
-            self.run(n_samples-batch_size, batch_size, filename)
+    def run(self, n_samples):
+        """Run the MCMC sampler for n_samples samples."""
+        self._metachain.extend(n_samples)
+        for i in range(n_samples):
+            self.sample()
 
     @abstractmethod
     def sample(self):
@@ -189,10 +184,3 @@ class MetaChain():
         This can be useful for monitoring progress, and for unit testing.
         """
         return self._index+1
-
-    def save_to_disk(self, filename):
-        if filename is not None:
-            print('Saving chain to file {}'.format(filename))
-            np.save(filename, self.chain())
-        else:
-            pass
