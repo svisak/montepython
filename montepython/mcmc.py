@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 import numpy as np
+import h5py
 import sys
 
 class MCMC(ABC):
@@ -45,6 +46,8 @@ class MCMC(ABC):
         self.lnprior = kwargs.pop('lnprior')
         self.lnlikelihood = kwargs.pop('lnlikelihood')
         self._metachain = MetaChain(ndim, startpos)
+
+        # USED INTERNALLY TO REMEMBER PREVIOUSLY COMPUTED POSTERIOR VALUE
         self._current_value = None
 
     def set_seed(self, seed):
@@ -75,7 +78,6 @@ class MCMC(ABC):
         # OK, RETURN LN OF POSTERIOR
         return lnprior_val + lnlikelihood_val
 
-    # USED INTERNALLY TO REMEMBER PREVIOUSLY COMPUTED POSTERIOR VALUE
     def _remember_value(self, value):
         self._current_value = value
 
@@ -87,6 +89,23 @@ class MCMC(ABC):
         self._metachain.extend(n_samples)
         for i in range(n_samples):
             self.sample()
+
+    def to_disk(self, filename=None, dataset_name=None, *args, **kwargs):
+        """Save the MCMC chain with metadata in an hdf5 file."""
+        if filename is None:
+            filename = '{}.hdf5'.format(self.to_ugly_string())
+        if dataset_name is None:
+            dataset_nate = filename.strip('.hdf5')
+        f = h5py.File(filename)
+        dset = f[dataset_name]
+        dset[...] = self.chain()
+        dset.attrs['acceptance_fraction'] = self.acceptance_fraction()
+        dset.attrs['ndim'] = self._metachain.dimensionality()
+        dset.attrs['startpos'] = self._metachain.startpos()
+        dset.attrs['mcmc_type'] = self.get_mcmc_type()
+        dset.attrs['montepython_version'] = montepython.__version__
+        for key, value in kwargs.items():
+            dset.attrs[key] = value
 
     @abstractmethod
     def sample(self):
