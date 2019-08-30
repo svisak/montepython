@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from .mcmc import MCMC
 import numpy as np
 from numpy.random import multivariate_normal

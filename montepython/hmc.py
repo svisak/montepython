@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # HMC sampling class.
 
 from .mcmc import MCMC

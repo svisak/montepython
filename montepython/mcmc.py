@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from abc import ABC, abstractmethod
 import numpy as np
 import h5py
