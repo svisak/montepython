@@ -97,7 +97,8 @@ class HMC(MCMC):
         kinetic_energy = momentum @ self.get_inverse_mass_matrix() @ momentum
         kinetic_energy /= 2
         if np.isnan(kinetic_energy):
-            raise ValueError('NaN: Energy.kinetic at momentum = {}'.format(momentum))
+            msg = 'NaN: Energy.kinetic at momentum = {}'.format(momentum)
+            raise ValueError(msg)
         return kinetic_energy
 
     def hamiltonian(self, potential_energy, kinetic_energy):
@@ -122,12 +123,16 @@ class HMC(MCMC):
         current_potential = self._recall_value()
         current_kinetic = self.kinetic(current_state.momentum())
         current_energy = self.hamiltonian(current_potential, current_kinetic)
+
         proposed_potential = self.potential(proposed_state.position())
         proposed_kinetic = self.kinetic(proposed_state.momentum())
         proposed_energy = self.hamiltonian(proposed_potential, proposed_kinetic)
+
         diff = current_energy - proposed_energy
-        metropolis_ratio = np.exp(diff / self._temperature)
-        acceptance_probability = min(1, metropolis_ratio)
+        metropolis_ratio = 1
+        if 0 > diff:
+            np.exp(diff / self._temperature)
+        acceptance_probability = metropolis_ratio
 
         # ACCEPT / REJECT
         if np.random.rand() < acceptance_probability:
