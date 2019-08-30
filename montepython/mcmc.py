@@ -91,11 +91,11 @@ class MCMC(ABC):
             self.sample()
 
     def to_disk(self, filename=None, dataset_name=None, *args, **kwargs):
-        """Save the MCMC chain with metadata in an hdf5 file."""
+        """Save the MCMC chain with metadata in an HDF5 file."""
         if filename is None:
-            filename = '{}.hdf5'.format(self.to_ugly_string())
+            filename = 'out.hdf5'
         if dataset_name is None:
-            dataset_nate = filename.strip('.hdf5')
+            dataset_nate = self.to_ugly_string()
         f = h5py.File(filename)
         dset = f[dataset_name]
         dset[...] = self.chain()
