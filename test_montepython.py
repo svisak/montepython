@@ -2,18 +2,22 @@
 
 import unittest
 import numpy as np
-from montepython.mcmc import MetaChain
-from montepython.hmc import HMC, State
+
+from montepython.bayes import BayesBase
+from montepython.hmc import HMC
 from montepython.rwm import RWM
+from montepython.state import State
+from montepython.metachain import MetaChain
 from montepython import utils
+
 
 class ChainTestCase(unittest.TestCase):
 
     def test_chain_init(self):
         for i in range(1, 4):
             with self.subTest(i=i):
-                metachain = MetaChain(i, self.randpos(i))
-                self.assertEqual(metachain._index, 0)
+                state = State(position=self.randpos(i))
+                metachain = MetaChain(state)
                 self.assertEqual(metachain.chain().shape, (1,i))
                 self.assertEqual(metachain.acceptance_fraction(), 1)
 
@@ -21,49 +25,38 @@ class ChainTestCase(unittest.TestCase):
         for i in range(1, 6):
             with self.subTest(i=i):
                 q = self.randpos(i)
-                metachain = MetaChain(i, q)
+                state = State(position=q)
+                metachain = MetaChain(state)
                 self.assertEqual(metachain.acceptance_fraction(), 1)
-                metachain.extend(10)
                 metachain.reject()
                 self.assertEqual(metachain.acceptance_fraction(), 0.5)
-                self.assertTrue((metachain.head() == q).all())
+                self.assertTrue((metachain.head().get('position') == q).all())
                 q = self.randpos(i)
-                metachain.accept(q)
-                self.assertTrue((metachain.head() == q).all())
+                state = State(position=q)
+                metachain.accept(state)
+                self.assertTrue((metachain.head().get('position') == q).all())
 
     def randpos(self, ndim):
         return np.random.multivariate_normal(np.zeros(ndim), np.eye(ndim))
 
-class MCMCTestCase(unittest.TestCase):
-
-    def test_lnposterior(self):
-        def lnprior(x):
-            return x
-        def lnlikelihood(x):
-            return x
-        rwm = RWM(stepsize=1, dim=1, startpos=1, lnprior=lnprior, lnlikelihood=lnlikelihood)
-        self.assertEqual(rwm.lnposterior(2), 4)
-        self.assertEqual(rwm.lnposterior(np.NINF), np.NINF)
-        with self.assertRaises(ValueError):
-            rwm.lnposterior(np.nan)
-
 class HMCTestCase(unittest.TestCase):
 
+    class Bayes(BayesBase):
+    
+        def __init__(self):
+            super().__init__()
+    
+        def evaluate(self, position):
+            self.set_lnlikelihood_value(1)
+            self.set_lnprior_value(1)
+            self.set_gradient_value(np.ones(10))
+
     def setUp(self):
-        def lnprior(position):
-            return 1
-
-        def lnlikelihood(position):
-            return 1
-
-        def gradient(position):
-            return np.ones(self.dim)
-
-        self.dim = 10
-        startpos = np.zeros(self.dim)
+        bayes = self.Bayes()
+        startpos = np.zeros(10)
         ell = 1
         epsilon = 1.0
-        self.hmc = HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
+        self.hmc = HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
 
     def test_chain_size(self):
         self.assertEqual(len(self.hmc.chain()), 1)
@@ -71,31 +64,32 @@ class HMCTestCase(unittest.TestCase):
         self.hmc.run(50)
         self.assertEqual(len(self.hmc.chain()), 51)
         self.assertEqual(self.hmc.chain().shape, (51,10))
-        self.assertEqual(self.hmc._metachain._index, 50)
 
     def test_potential(self):
-        self.assertEqual(self.hmc.potential(0), -2)
+        dummy_state = State(position=0, lnposterior=2)
+        self.assertEqual(self.hmc.potential(dummy_state), -2)
 
     def test_hamiltonian(self):
-        position = 0
-        momentum = 2*np.ones(self.dim)
-        potential = self.hmc.potential(position)
-        kinetic = self.hmc.kinetic(momentum)
-        self.assertEqual(self.hmc.hamiltonian(potential, kinetic), 18)
+        dummy_state = State(position=0, momentum=2*np.ones(10), lnposterior=2)
+        self.assertEqual(self.hmc.hamiltonian(dummy_state), 18)
 
 class RWMTestCase(unittest.TestCase):
 
+    class Bayes(BayesBase):
+    
+        def __init__(self):
+            super().__init__()
+    
+        def evaluate(self, position):
+            self.set_lnlikelihood_value(1)
+            self.set_lnprior_value(1)
+
     def setUp(self):
-        def lnprior(position):
-            return 1
+        bayes = self.Bayes()
 
-        def lnlikelihood(position):
-            return 1
-
-        self.dim = 2
-        startpos = np.zeros(self.dim)
+        startpos = np.zeros(2)
         stepsize = 4.0
-        self.rwm = RWM(stepsize=stepsize, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
+        self.rwm = RWM(bayes, startpos, stepsize=stepsize)
 
     def test_chain_size(self):
         self.assertEqual(len(self.rwm.chain()), 1)
@@ -103,7 +97,6 @@ class RWMTestCase(unittest.TestCase):
         self.rwm.run(25)
         self.assertEqual(len(self.rwm.chain()), 26)
         self.assertEqual(self.rwm.chain().shape, (26,2))
-        self.assertEqual(self.rwm._metachain._index, 25)
 
 class UtilsTestCase(unittest.TestCase):
 
@@ -134,29 +127,30 @@ class UtilsTestCase(unittest.TestCase):
 
 class BatchTestCase(unittest.TestCase):
 
+    class Bayes(BayesBase):
+    
+        def __init__(self):
+            super().__init__()
+    
+        def evaluate(self, position):
+            self.set_lnlikelihood_value(1)
+            self.set_lnprior_value(1)
+            self.set_gradient_value(np.ones(10))
+
     def setUp(self):
-        def lnprior(position):
-            return 1
-
-        def lnlikelihood(position):
-            return 1
-
-        def gradient(position):
-            return np.ones(self.dim)
-
-        self.dim = 10
-        startpos = np.zeros(self.dim)
+        bayes = self.Bayes()
+        startpos = np.zeros(10)
         ell = 1
         epsilon = 1.0
-        self.hmc = HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=self.dim, startpos=startpos, lnprior=lnprior, lnlikelihood=lnlikelihood)
+        self.hmc = HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
 
     def test_chain_size(self):
         self.assertEqual(len(self.hmc.chain()), 1)
         self.assertEqual(self.hmc.chain().shape, (1,10))
-        self.hmc.run(n_samples=52, batch_size=10)
+        for n in [10, 10, 10, 10, 10, 2]:
+            self.hmc.run(n)
         self.assertEqual(len(self.hmc.chain()), 53)
         self.assertEqual(self.hmc.chain().shape, (53,10))
-        self.assertEqual(self.hmc._metachain._index, 52)
 
 if __name__ == '__main__':
     unittest.main()
