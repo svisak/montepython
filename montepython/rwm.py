@@ -5,24 +5,36 @@ from numpy.random import multivariate_normal
 class RWM(MCMC):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args)
         stepsize = kwargs.pop('stepsize', 1.0)
-        self._covariance = stepsize * np.eye(self._metachain.dimensionality())
+        self._covariance = stepsize * np.eye(self.get_ndim())
 
-        # CALCULATE VALUE OF POSTERIOR AT STARTPOS
-        tmp = self.lnposterior(self._metachain.startpos())
-        self._remember_value(tmp)
+    # STATE PROPOSAL
+    def propose_state(self, current_state):
+        pos = current_state.position()
+        cov = self._covariance
+        proposed_position = multivariate_normal(pos, cov)
+        self._bayes.evaluate(proposed_position)
+        proposed_lnposterior = self._bayes.lnposterior()
+        proposed_state = State(proposed_position, proposed_lnposterior)
+        return proposed_state
 
+    # JOINT LNPROB
+    def joint_lnprob(self, state):
+        # This is trivial for RWM, but not for HMC
+        return state.lnposterior()
+
+    # ALGORITHM INFORMATION
     def to_ugly_string(self):
         n = self._metachain.chain_length()
-        ndim = self._metachain.dimensionality()
+        ndim = self.get_ndim()
         stepsize = self._covariance[0, 0]
         str = "rwm_N{}_ndim{}_stepsize{}".format(n, ndim, stepsize)
         return str
 
     def to_pretty_string(self):
         n = self._metachain.chain_length()
-        ndim = self._metachain.dimensionality()
+        ndim = self.get_ndim()
         stepsize = self._covariance[0, 0]
         str = "RWM, {} samples, stepsize {}".format(n, ndim, stepsize)
         return str
@@ -30,27 +42,3 @@ class RWM(MCMC):
     def get_mcmc_type(self):
         return "RWM"
 
-    def sample(self):
-        # PROPOSE NEW STATE
-        current_position = self._metachain.head()
-        proposed_position = multivariate_normal(current_position, self._covariance)
-
-        # ACCEPTANCE PROBABILITY
-        proposed_value = self.lnposterior(proposed_position)
-        current_value = self._recall_value()
-        lnposterior_diff = proposed_value - current_value
-        # Let 1 be the maximum value of the Metropolis ratio
-        # This is to prevent numerical issues since lnposterior_diff
-        # can be a large positive number
-        metropolis_ratio = 1
-        if 0 > lnposterior_diff:
-            metropolis_ratio = np.exp(lnposterior_diff)
-        # Technically the acceptance probability is min(1, metropolis_ratio)
-        acceptance_probability = metropolis_ratio
-
-        # ACCEPT / REJECT
-        if np.random.rand() < acceptance_probability:
-            self._metachain.accept(proposed_position)
-            self._remember_value(proposed_value)
-        else:
-            self._metachain.reject()
