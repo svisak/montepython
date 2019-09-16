@@ -5,3 +5,4 @@ dist
 data
 montepython/__pycache__
 VERSION
+*.swp
