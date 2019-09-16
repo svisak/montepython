@@ -50,6 +50,11 @@ class HMC(MCMC):
         tmp = self._inverse_mass_matrix
         self._leapfrog = Leapfrog(self._bayes, ell, epsilon, tmp)
 
+    def to_disk(self, *args, **kwargs={}):
+        kwargs['leapfrog_ell'] = self._leapfrog.get_ell()
+        kwargs['leapfrog_epsilon'] = self._leapfrog.get_epsilon()
+        super().to_disk(*args, **kwargs)
+
     # STATE PROPOSAL
     def propose_state(self, current_state):
         current_state.set('momentum', self.draw_momentum())
@@ -106,8 +111,11 @@ class HMC(MCMC):
         str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, ndim, ell, eps)
         return str
 
-    def mcmc_type(self):
-        return "HMC"
+    def mcmc_type(self, uppercase=False):
+        if uppercase is True:
+            return "HMC"
+        else:
+            return "hmc"
 
     # ALGORITHM INFORMATION - HMC SPECIFIC
     def get_mass_matrix(self):

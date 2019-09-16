@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import h5py
 import sys
 
 from .state import State
 from .metachain import MetaChain
+from .utils import mcmc_to_disk
 
 
 class MCMC(ABC):
@@ -68,22 +68,20 @@ class MCMC(ABC):
     def ndim(self):
         return self._metachain.ndim()
 
-    def to_disk(self, filename=None, dataset_name=None, *args, **kwargs):
+    def to_disk(self, filename=None, dataset_name=None, **kwargs):
         """Save the MCMC chain with metadata in an HDF5 file."""
-        if filename is None:
-            filename = 'out.hdf5'
-        if dataset_name is None:
-            dataset_nate = self.to_ugly_string()
-        f = h5py.File(filename)
-        dset = f[dataset_name]
-        dset[...] = self.chain()
-        dset.attrs['acceptance_fraction'] = self.acceptance_fraction()
-        dset.attrs['ndim'] = self.ndim()
-        dset.attrs['startpos'] = self._metachain.startpos()
-        dset.attrs['mcmc_type'] = self.mcmc_type()
-        dset.attrs['montepython_version'] = montepython.__version__
+
+        kwargs['filename'] = filename
+        kwargs['dataset_name'] = dataset_name
+        kwargs['acceptance_fraction'] = self.acceptance_fraction()
+        kwargs['ndim'] = self.ndim()
+        kwargs['startpos'] = self._metachain.startpos()
+        kwargs['mcmc_type'] = self.mcmc_type()
+        kwargs['montepython_version'] = montepython.__version__
+        kwargs['montepython_dirty_version'] = montepython.__dirty_version__
         for key, value in kwargs.items():
-            dset.attrs[key] = value
+            kwargs[key] = value
+        mcmc_to_disk(self, **kwargs)
 
     def run(self, n_samples):
         """Run the MCMC sampler for n_samples samples."""
@@ -133,6 +131,6 @@ class MCMC(ABC):
         raise NotImplementedError("Unimplemented abstract method!")
 
     @abstractmethod
-    def mcmc_type(self):
+    def mcmc_type(self, uppercase=False):
         """Return a string with the name of the MCMC algorithm."""
         raise NotImplementedError("Unimplemented abstract method!")

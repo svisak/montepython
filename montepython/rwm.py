@@ -11,10 +11,14 @@ class RWM(MCMC):
         super().__init__(bayes, startpos, **kwargs)
 
         # POP OPTIONAL PARAMETERS
-        stepsize = kwargs.pop('stepsize', 1.0)
+        self._stepsize = kwargs.pop('stepsize', 1.0)
 
         # CREATE THE COVARIANCE MATRIX
-        self._covariance = stepsize * np.eye(self.ndim())
+        self._covariance = self._stepsize * np.eye(self.ndim())
+
+    def to_disk(self, *args, **kwargs={}):
+        kwargs['stepsize'] = self._stepsize()
+        super().to_disk(*args, **kwargs)
 
     # STATE PROPOSAL
     def propose_state(self, current_state):
@@ -48,5 +52,8 @@ class RWM(MCMC):
         str = "RWM, {} samples, stepsize {}".format(n, ndim, stepsize)
         return str
 
-    def mcmc_type(self):
-        return "RWM"
+    def mcmc_type(self, uppercase=False):
+        if uppercase is True:
+            return "RWM"
+        else:
+            return "rwm"
