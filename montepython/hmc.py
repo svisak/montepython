@@ -31,7 +31,7 @@ class HMC(MCMC):
     """
 
     def __init__(self, bayes, startpos, **kwargs):
-    
+
         # CALL SUPERCLASS CONSTRUCTOR
         super().__init__(bayes, startpos, **kwargs)
         self._metachain.head().set('momentum', self.draw_momentum())
