@@ -8,7 +8,7 @@ from montepython.hmc import HMC
 from montepython.rwm import RWM
 from montepython.state import State
 from montepython.metachain import MetaChain
-from montepython import utils
+from montepython import diagnostics
 
 
 class ChainTestCase(unittest.TestCase):
@@ -105,7 +105,7 @@ class UtilsTestCase(unittest.TestCase):
         for i in range(10, 0, -1):
             chain[i-1, 0] = i
         max_lag = 1
-        acors = utils.autocorrelation(chain, max_lag)
+        acors = diagnostics.autocorrelation(chain, max_lag)
         self.assertEqual(acors[0, 0], 1)
         self.assertLess(acors[max_lag, 0]-0.927710843373494, 0.00001)
 
@@ -120,7 +120,7 @@ class UtilsTestCase(unittest.TestCase):
         max_lag = 100
         for dim in range(1, max_dimensions+1):
             chain = np.random.rand(10000, dim)
-            acors = utils.autocorrelation(chain, max_lag)
+            acors = diagnostics.autocorrelation(chain, max_lag)
             self.assertLess(np.abs(np.amax(acors[0, :]))-1, tol)
             self.assertLess(np.abs(np.amin(acors[0, :]))-1, tol)
             self.assertLess(np.amax(acors[1:, :]), 0.05)
@@ -128,7 +128,7 @@ class UtilsTestCase(unittest.TestCase):
     def test_relative_error(self):
         chain = np.array([[1, 4], [2, 5], [3, 6]])
         print(chain.shape)
-        rel_err = utils.relative_error(chain)
+        rel_err = diagnostics.relative_error(chain)
         correct = np.sqrt(1/3) * np.array([1/2, 1/5])
         self.assertTrue((np.abs(rel_err-correct) < 0.00001).all())
 

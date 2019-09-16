@@ -1,48 +1,26 @@
-# MCMC utilities.
+#!/usr/bin/env python3
 
-import warnings
-import numpy as np
-import scipy
+import time
+import h5py
 
-def autocorrelation(chain, max_lag):
-    ndim = chain.shape[1]
-    acors = np.empty((max_lag+1, ndim))
-    if max_lag > len(chain)/5:
-        warnings.warn('max_lag is more than one fifth the chain length')
-    for dim in range(ndim):
-        chain1d = chain[:, dim] - np.average(chain[:, dim])
-        for lag in range(max_lag+1):
-            unshifted = None
-            shifted = chain1d[lag:]
-            if 0 == lag:
-                unshifted = chain1d
-            else:
-                unshifted = chain1d[:-lag]
-            normalization = np.sqrt(np.dot(unshifted, unshifted))
-            normalization *= np.sqrt(np.dot(shifted, shifted))
-            acors[lag, dim] = np.dot(unshifted, shifted) / normalization
-    return acors
+def timestamp():
+    return time.strftime("%Y%m%d_%H%M%S", time.gmtime())
 
-def exponential_function(lag, tao, offset):
-    return np.exp(-lag/tao) + offset
+def mcmc_to_disk(mcmc, **kwargs):
+    """Save the MCMC chain to disk with the metadata supplied in kwargs."""
 
-def autocorrelation_time(acors):
-    tao = scipy.optimize.curve_fit(exp_func, lags, acors)[0][0]
-    return tao
+    # FILENAME AND DATASET NAMES
+    tmp = f'{mcmc.mcmc_type()}.hdf5'
+    filename = kwargs.pop(filename, tmp)
+    tmp = f'{self.mcmc_type()}_{timestamp()}'
+    dataset_name = kwargs.pop(dataset_name, tmp)
 
-def most_correlated(acors):
-    maximum = 0
-    most = -1
-    ndim = acors.shape[1]
-    for dim in range(ndim):
-        total = np.sum(np.abs(acors[:, dim]))
-        if np.abs(total) > maximum:
-            maximum = total
-            most = dim
-    return most
+    # OPEN FILE IN TRUNCATE-AND-WRITE MODE
+    f = h5py.File(filename, 'w')
 
-def relative_error(chain):
-    n_samples = len(chain)
-    mean = np.mean(chain, axis=0)
-    dev = np.std(chain, axis=0, ddof=1)
-    return dev / np.sqrt(n_samples) / np.abs(mean)
+    # CREATE DATASET WITH THE CHAIN AS DATA
+    dset = f.create_dataset(dataset_name, mcmc.chain())
+
+    # ADD ATTRIBUTES
+    for key, value in kwargs.items():
+        dset.attrs[key] = value   
