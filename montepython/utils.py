@@ -40,3 +40,9 @@ def most_correlated(acors):
             maximum = total
             most = dim
     return most
+
+def relative_error(chain):
+    n_samples = len(shape)
+    mean = np.mean(chain, axis=0)
+    dev = np.std(chain, axis=0, ddof=1)
+    return dev / np.sqrt(n_samples) / np.abs(mean)
