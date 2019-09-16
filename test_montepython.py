@@ -125,6 +125,13 @@ class UtilsTestCase(unittest.TestCase):
             self.assertLess(np.abs(np.amin(acors[0, :]))-1, tol)
             self.assertLess(np.amax(acors[1:, :]), 0.05)
 
+    def test_relative_error(self):
+        chain = np.array([[1, 4], [2, 5], [3, 6]])
+        print(chain.shape)
+        rel_err = utils.relative_error(chain)
+        correct = np.sqrt(1/3) * np.array([1/2, 1/5])
+        self.assertTrue((np.abs(rel_err-correct) < 0.00001).all())
+
 class BatchTestCase(unittest.TestCase):
 
     class Bayes(BayesBase):
