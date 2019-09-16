@@ -5,6 +5,7 @@ import sys
 from .state import State
 from .metachain import MetaChain
 from .utils import mcmc_to_disk
+import montepython
 
 
 class MCMC(ABC):
@@ -71,14 +72,15 @@ class MCMC(ABC):
     def to_disk(self, filename=None, dataset_name=None, **kwargs):
         """Save the MCMC chain with metadata in an HDF5 file."""
 
-        kwargs['filename'] = filename
-        kwargs['dataset_name'] = dataset_name
+        if filename is not None:
+            kwargs['filename'] = filename
+        if dataset_name is not None:
+            kwargs['dataset_name'] = dataset_name
         kwargs['acceptance_fraction'] = self.acceptance_fraction()
         kwargs['ndim'] = self.ndim()
         kwargs['startpos'] = self._metachain.startpos()
         kwargs['mcmc_type'] = self.mcmc_type()
         kwargs['montepython_version'] = montepython.__version__
-        kwargs['montepython_dirty_version'] = montepython.__dirty_version__
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
