@@ -34,9 +34,8 @@ class BayesBase(ABC):
         return self._gradient_value
 
     def get_lngradient_value(self):
-        f = np.exp(self.get_lnposterior_value())
-        fprime = self.get_gradient_value()
-        return -(fprime / f)
+        diff = np.log(self.get_gradient_value()) - self.get_nlp_value()
+        return np.exp(diff)
 
     def set_lnlikelihood_value(self, val):
         self._lnlikelihood_value = val
