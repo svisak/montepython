@@ -50,7 +50,7 @@ class HMC(MCMC):
         tmp = self._inverse_mass_matrix
         self._leapfrog = Leapfrog(self._bayes, ell, epsilon, tmp)
 
-    def to_disk(self, *args, **kwargs={}):
+    def to_disk(self, *args, kwargs={}):
         kwargs['leapfrog_ell'] = self._leapfrog.get_ell()
         kwargs['leapfrog_epsilon'] = self._leapfrog.get_epsilon()
         super().to_disk(*args, **kwargs)
