@@ -1,7 +1,9 @@
 # HMC sampling class.
 
-from .mcmc import MCMC
 import numpy as np
+
+from .mcmc import MCMC
+from .leapfrog import Leapfrog
 
 class HMC(MCMC):
     """
@@ -28,22 +30,19 @@ class HMC(MCMC):
 
     """
 
-    def __init__(self, startpos, *args, **kwargs):
-        super().__init__(*args)
+    def __init__(self, bayes, startpos, **kwargs):
 
-        self._bayes.evaluate(startpos)
-        lnposterior = self._bayes.lnposterior()
-        momentum = self.draw_momentum()
-        gradient = self._bayes.gradient()
-        initial_state = HMCState(startpos, lnposterior, momentum, gradient)
-        self._metachain = MetaChain(initial_state)
+        # CALL SUPERCLASS CONSTRUCTOR
+        super().__init__(bayes, startpos, **kwargs)
+        self._metachain.head().set('momentum', self.draw_momentum())
+        self._metachain.head().set('gradient', self._bayes.get_gradient_value())
 
         # POP MANDATORY PARAMETERS
         ell = kwargs.pop('leapfrog_ell')
         epsilon = kwargs.pop('leapfrog_epsilon')
 
         # POP OPTIONAL PARAMETERS
-        default_mass_matrix = np.eye(self._metachain.dimensionality())
+        default_mass_matrix = np.eye(self.ndim())
         self._mass_matrix = kwargs.pop('mass_matrix', default_mass_matrix)
         self._inverse_mass_matrix = np.linalg.inv(self._mass_matrix)
 
@@ -51,14 +50,19 @@ class HMC(MCMC):
         tmp = self._inverse_mass_matrix
         self._leapfrog = Leapfrog(self._bayes, ell, epsilon, tmp)
 
+    def to_disk(self, *args, **kwargs={}):
+        kwargs['leapfrog_ell'] = self._leapfrog.get_ell()
+        kwargs['leapfrog_epsilon'] = self._leapfrog.get_epsilon()
+        super().to_disk(*args, **kwargs)
+
     # STATE PROPOSAL
     def propose_state(self, current_state):
-        current_state.set_momentum(self.draw_momentum())
+        current_state.set('momentum', self.draw_momentum())
         return self._leapfrog.solve(current_state)
 
     def draw_momentum(self):
-        mean = np.zeros(self._metachain.dimensionality())
-        cov = np.eye(self._metachain.dimensionality())
+        mean = np.zeros(self.ndim())
+        cov = np.eye(self.ndim())
         return np.random.multivariate_normal(mean, cov)
 
     # JOINT LNPROB
@@ -78,10 +82,10 @@ class HMC(MCMC):
             return potential_energy + kinetic_energy
 
     def potential(self, state):
-        return -state.lnposterior()
+        return -state.get('lnposterior')
 
     def kinetic(self, state):
-        momentum = state.momentum()
+        momentum = state.get('momentum')
         inv = self.get_inverse_mass_matrix()
         kinetic_energy = momentum @ inv @ momentum
         kinetic_energy /= 2
@@ -107,8 +111,11 @@ class HMC(MCMC):
         str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, ndim, ell, eps)
         return str
 
-    def get_mcmc_type(self):
-        return "HMC"
+    def mcmc_type(self, uppercase=False):
+        if uppercase is True:
+            return "HMC"
+        else:
+            return "hmc"
 
     # ALGORITHM INFORMATION - HMC SPECIFIC
     def get_mass_matrix(self):

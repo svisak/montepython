@@ -2,5 +2,7 @@ __pycache__
 montepython.egg-info
 build
 dist
+data
 montepython/__pycache__
 VERSION
+*.swp

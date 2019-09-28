@@ -1,3 +1,5 @@
+from .state import State
+
 class Leapfrog():
     """Leapfrog solver for HMC."""
 
@@ -16,22 +18,29 @@ class Leapfrog():
         return self._epsilon
 
     def solve(self, initial_state):
-        position = initial_state.position()
-        momentum = initial_state.momentum()
+        position = initial_state.get('position')
+        momentum = initial_state.get('momentum')
 
         ell = self.get_ell()
         epsilon = self.get_epsilon()
 
-        # SOLVE AND RETURN
-        lngradient = self._bayes.lngradient()
+        # SOLVE
+        lngradient = self._bayes.get_lngradient_value()
         momentum = momentum - epsilon * lngradient / 2
         for i in range(ell):
             position += epsilon * self._inverse_mass_matrix @ momentum
             self._bayes.evaluate(position)
             if (i != ell-1):
-                momentum -= epsilon * self._bayes.lngradient()
-        momentum -= epsilon * self._bayes.lngradient() / 2
+                momentum -= epsilon * self._bayes.get_lngradient_value()
+        momentum -= epsilon * self._bayes.get_lngradient_value() / 2
         momentum = -momentum
-        lnposterior = self._bayes.lnposterior()
-        gradient = self._bayes.gradient()
-        return HMCState(position, lnposterior, momentum, gradient)
+
+        # RETURN
+        lnposterior = self._bayes.get_lnposterior_value()
+        gradient = self._bayes.get_gradient_value()
+        tmp = {}
+        tmp['position'] = position
+        tmp['momentum'] = momentum
+        tmp['lnposterior'] = lnposterior
+        tmp['gradient'] = gradient
+        return State(**tmp)

@@ -1,44 +1,51 @@
+from abc import ABC, abstractmethod
+import numpy as np
+
 class BayesBase(ABC):
 
     def __init__(self):
-        self._lnlikelihood = None
-        self._lnprior = None
-        self._gradient = None
+        self._lnlikelihood_value = None
+        self._lnprior_value = None
+        self._gradient_value = None
 
-    def lnposterior(self):
-        lnlikelihood_value = self.lnlikelihood()
-        lnprior_value = self.lnprior()
+    def get_lnposterior_value(self):
+        lnlikelihood_value = self.get_lnlikelihood_value()
+        lnprior_value = self.get_lnprior_value()
         if np.isinf(lnprior_value):
             return lnprior_value
         elif np.isinf(lnlikelihood_value):
             return lnlikelihood_value
         lnposterior_value = lnprior_value + lnlikelihood_value
         if np.isnan(lnposterior_value):
-            msg = 'NaN encountered in MCMC.lnposterior()'
+            msg = 'NaN encountered in BayesBase.get_lnposterior_value()'
             raise FloatingPointError(msg)
         return lnposterior_value
 
-    def lnlikelihood(self):
-        return self._lnlikelihood
+    def get_nlp_value(self):
+        return -self.get_lnposterior_value()
 
-    def lnprior(self):
-        return self._lnprior
+    def get_lnlikelihood_value(self):
+        return self._lnlikelihood_value
 
-    def gradient(self):
-        return self._gradient
+    def get_lnprior_value(self):
+        return self._lnprior_value
 
-    def lngradient(self):
-        return self.gradient() / self.lnposterior()
+    def get_gradient_value(self):
+        return self._gradient_value
 
-    def set_lnlikelihood(self, val):
-        self._lnlikelihood = val
+    def get_lngradient_value(self):
+        diff = np.log(self.get_gradient_value()) - self.get_nlp_value()
+        return np.exp(diff)
 
-    def set_lnprior(self, val):
-        self._lnprior = val
+    def set_lnlikelihood_value(self, val):
+        self._lnlikelihood_value = val
 
-    def set_gradient(self, val):
-        self._gradient = val
+    def set_lnprior_value(self, val):
+        self._lnprior_value = val
+
+    def set_gradient_value(self, val):
+        self._gradient_value = val
 
     @abstractmethod
-    def evaluate_pdf(self, position):
+    def evaluate(self, position):
         raise NotImplementedError("Unimplemented abstract method!")

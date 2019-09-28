@@ -1,3 +1,6 @@
+import numpy as np
+import copy
+
 class MetaChain():
     """
     This class is used to store relevant data about the
@@ -10,7 +13,6 @@ class MetaChain():
     def __init__(self, initial_state):
         self._states = []
         self._n_accepted = 0
-        self._index = -1
         self.accept(initial_state)
 
     def reset(self):
@@ -38,13 +40,13 @@ class MetaChain():
 
     def startpos(self):
         """Return the first position in the chain."""
-        return copy.deepcopy(self._states[0].position())
+        return self._states[0].get('position')
 
     def chain(self):
         """Return the Markov chain."""
         chain = np.empty((self.chain_length(), self.ndim()))
         for i in range(self.chain_length()):
-            chain[i, :] = self._states[i].position()
+            chain[i, :] = self._states[i].get('position')
         return chain
 
     def acceptance_fraction(self):
@@ -60,4 +62,4 @@ class MetaChain():
 
     def ndim(self):
         """Return the number of dimensions in the chain."""
-        return len(self._states[0].position())
+        return len(self._states[0].get('position'))
