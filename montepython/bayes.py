@@ -6,7 +6,7 @@ class BayesBase(ABC):
     def __init__(self):
         self._lnlikelihood_value = None
         self._lnprior_value = None
-        self._gradient_value = None
+        self._nlp_gradient_value = None
 
     def get_lnposterior_value(self):
         lnlikelihood_value = self.get_lnlikelihood_value()
@@ -30,12 +30,8 @@ class BayesBase(ABC):
     def get_lnprior_value(self):
         return self._lnprior_value
 
-    def get_gradient_value(self):
-        return self._gradient_value
-
-    def get_lngradient_value(self):
-        diff = np.log(self.get_gradient_value()) - self.get_nlp_value()
-        return np.exp(diff)
+    def get_nlp_gradient_value(self):
+        return self._nlp_gradient_value
 
     def set_lnlikelihood_value(self, val):
         self._lnlikelihood_value = val
@@ -43,8 +39,8 @@ class BayesBase(ABC):
     def set_lnprior_value(self, val):
         self._lnprior_value = val
 
-    def set_gradient_value(self, val):
-        self._gradient_value = val
+    def set_nlp_gradient_value(self, val):
+        self._nlp_gradient_value = val
 
     @abstractmethod
     def evaluate(self, position):

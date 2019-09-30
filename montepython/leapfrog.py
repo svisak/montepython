@@ -25,22 +25,22 @@ class Leapfrog():
         epsilon = self.get_epsilon()
 
         # SOLVE
-        lngradient = self._bayes.get_lngradient_value()
-        momentum = momentum - epsilon * lngradient / 2
+        nlp_gradient = self._bayes.get_nlp_gradient_value()
+        momentum = momentum - epsilon * nlp_gradient / 2
         for i in range(ell):
             position += epsilon * self._inverse_mass_matrix @ momentum
             self._bayes.evaluate(position)
             if (i != ell-1):
-                momentum -= epsilon * self._bayes.get_lngradient_value()
-        momentum -= epsilon * self._bayes.get_lngradient_value() / 2
+                momentum -= epsilon * self._bayes.get_nlp_gradient_value()
+        momentum -= epsilon * self._bayes.get_nlp_gradient_value() / 2
         momentum = -momentum
 
         # RETURN
         lnposterior = self._bayes.get_lnposterior_value()
-        gradient = self._bayes.get_gradient_value()
+        nlp_gradient = self._bayes.get_nlp_gradient_value()
         tmp = {}
         tmp['position'] = position
         tmp['momentum'] = momentum
         tmp['lnposterior'] = lnposterior
-        tmp['gradient'] = gradient
+        tmp['nlp_gradient'] = nlp_gradient
         return State(**tmp)

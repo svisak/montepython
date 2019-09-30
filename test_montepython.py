@@ -49,7 +49,7 @@ class HMCTestCase(unittest.TestCase):
         def evaluate(self, position):
             self.set_lnlikelihood_value(1)
             self.set_lnprior_value(1)
-            self.set_gradient_value(np.ones(10))
+            self.set_nlp_gradient_value(np.ones(10))
 
     def setUp(self):
         bayes = self.Bayes()
@@ -142,7 +142,7 @@ class BatchTestCase(unittest.TestCase):
         def evaluate(self, position):
             self.set_lnlikelihood_value(1)
             self.set_lnprior_value(1)
-            self.set_gradient_value(np.ones(10))
+            self.set_nlp_gradient_value(np.ones(10))
 
     def setUp(self):
         bayes = self.Bayes()
