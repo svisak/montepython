@@ -10,7 +10,7 @@ def mcmc_to_disk(mcmc, **kwargs):
     """Save the MCMC chain to disk with the metadata supplied in kwargs."""
 
     # FILENAME AND DATASET NAMES
-    tmp = f'{mcmc.mcmc_type()}.hdf5'
+    tmp = f'{hdf5/mcmc.mcmc_type()}.hdf5'
     filename = kwargs.pop('filename', tmp)
     tmp = f'{mcmc.mcmc_type()}_{timestamp()}'
     dataset_name = kwargs.pop('dataset_name', tmp)
