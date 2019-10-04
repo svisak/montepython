@@ -98,7 +98,7 @@ class RWMTestCase(unittest.TestCase):
         self.assertEqual(len(self.rwm.chain()), 26)
         self.assertEqual(self.rwm.chain().shape, (26,2))
 
-class UtilsTestCase(unittest.TestCase):
+class DiagnosticsTestCase(unittest.TestCase):
 
     def test_autocorrelation_small(self):
         chain = np.empty((10, 1))
@@ -127,7 +127,6 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_relative_error(self):
         chain = np.array([[1, 4], [2, 5], [3, 6]])
-        print(chain.shape)
         rel_err = diagnostics.relative_error(chain)
         correct = np.sqrt(1/3) * np.array([1/2, 1/5])
         self.assertTrue((np.abs(rel_err-correct) < 0.00001).all())
