@@ -18,7 +18,8 @@ class ChainTestCase(unittest.TestCase):
             with self.subTest(i=i):
                 state = State(position=self.randpos(i))
                 metachain = MetaChain(state)
-                self.assertEqual(metachain.chain().shape, (1,i))
+                self.assertEqual(metachain.chain_with_startpos().shape, (1,i))
+                self.assertEqual(metachain.chain().shape, (0,i))
                 self.assertEqual(metachain.acceptance_fraction(), 1)
 
     def test_accept_reject(self):
@@ -59,11 +60,11 @@ class HMCTestCase(unittest.TestCase):
         self.hmc = HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
 
     def test_chain_size(self):
-        self.assertEqual(len(self.hmc.chain()), 1)
-        self.assertEqual(self.hmc.chain().shape, (1,10))
+        self.assertEqual(len(self.hmc.chain()), 0)
+        self.assertEqual(self.hmc.chain().shape, (0,10))
         self.hmc.run(50)
-        self.assertEqual(len(self.hmc.chain()), 51)
-        self.assertEqual(self.hmc.chain().shape, (51,10))
+        self.assertEqual(len(self.hmc.chain()), 50)
+        self.assertEqual(self.hmc.chain().shape, (50,10))
 
     def test_potential(self):
         dummy_state = State(position=0, lnposterior=2)
@@ -92,11 +93,11 @@ class RWMTestCase(unittest.TestCase):
         self.rwm = RWM(bayes, startpos, stepsize=stepsize)
 
     def test_chain_size(self):
-        self.assertEqual(len(self.rwm.chain()), 1)
-        self.assertEqual(self.rwm.chain().shape, (1,2))
+        self.assertEqual(len(self.rwm.chain()), 0)
+        self.assertEqual(self.rwm.chain().shape, (0,2))
         self.rwm.run(25)
-        self.assertEqual(len(self.rwm.chain()), 26)
-        self.assertEqual(self.rwm.chain().shape, (26,2))
+        self.assertEqual(len(self.rwm.chain()), 25)
+        self.assertEqual(self.rwm.chain().shape, (25,2))
 
 class DiagnosticsTestCase(unittest.TestCase):
 
@@ -151,12 +152,15 @@ class BatchTestCase(unittest.TestCase):
         self.hmc = HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
 
     def test_chain_size(self):
-        self.assertEqual(len(self.hmc.chain()), 1)
-        self.assertEqual(self.hmc.chain().shape, (1,10))
+        self.assertEqual(len(self.hmc.chain_with_startpos()), 1)
+        self.assertEqual(len(self.hmc.chain()), 0)
+        self.assertEqual(self.hmc.chain_with_startpos().shape, (1,10))
+        self.assertEqual(self.hmc.chain().shape, (0,10))
         for n in [10, 10, 10, 10, 10, 2]:
             self.hmc.run(n)
-        self.assertEqual(len(self.hmc.chain()), 53)
-        self.assertEqual(self.hmc.chain().shape, (53,10))
+        self.assertEqual(len(self.hmc.chain_with_startpos()), 53)
+        self.assertEqual(len(self.hmc.chain()), 52)
+        self.assertEqual(self.hmc.chain().shape, (52,10))
 
 if __name__ == '__main__':
     unittest.main()

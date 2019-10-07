@@ -66,6 +66,10 @@ class MCMC(ABC):
         """
         return self._metachain.chain()
 
+    def chain_with_startpos(self):
+        """Return the Markov chain including the start position."""
+        return self._metachain.chain_with_startpos()
+
     def ndim(self):
         return self._metachain.ndim()
 

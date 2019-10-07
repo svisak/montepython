@@ -42,12 +42,17 @@ class MetaChain():
         """Return the first position in the chain."""
         return self._states[0].get('position')
 
-    def chain(self):
-        """Return the Markov chain."""
+    def chain_with_startpos(self):
+        """Return the Markov chain including startpos."""
         chain = np.empty((self.chain_length(), self.ndim()))
         for i in range(self.chain_length()):
             chain[i, :] = self._states[i].get('position')
         return chain
+
+    def chain(self):
+        """Return the Markov chain, excluding the start position."""
+        chain = self.chain_with_startpos()
+        return chain[1:, :]
 
     def acceptance_fraction(self):
         """Return the current acceptance fraction."""
