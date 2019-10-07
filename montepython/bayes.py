@@ -1,7 +1,13 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-class BayesBase(ABC):
+class Bayes(ABC):
+    """Abstract Bayes class. As a user, you should implement your likelihood
+    and prior here. Do this by extending the class and implementing the
+    abstract evaluate method, wherein you set the current values of the
+    log likelihood and the log prior as well as the gradient of the
+    negative log posterior. These are set with the "set_{}_value" methods.
+    """
 
     def __init__(self):
         self._lnlikelihood_value = None

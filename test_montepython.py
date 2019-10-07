@@ -3,7 +3,7 @@
 import unittest
 import numpy as np
 
-from montepython.bayes import BayesBase
+from montepython.bayes import Bayes
 from montepython.hmc import HMC
 from montepython.rwm import RWM
 from montepython.state import State
@@ -41,7 +41,7 @@ class ChainTestCase(unittest.TestCase):
 
 class HMCTestCase(unittest.TestCase):
 
-    class Bayes(BayesBase):
+    class Bayes(Bayes):
     
         def __init__(self):
             super().__init__()
@@ -75,7 +75,7 @@ class HMCTestCase(unittest.TestCase):
 
 class RWMTestCase(unittest.TestCase):
 
-    class Bayes(BayesBase):
+    class Bayes(Bayes):
     
         def __init__(self):
             super().__init__()
@@ -133,7 +133,7 @@ class DiagnosticsTestCase(unittest.TestCase):
 
 class BatchTestCase(unittest.TestCase):
 
-    class Bayes(BayesBase):
+    class Bayes(Bayes):
     
         def __init__(self):
             super().__init__()

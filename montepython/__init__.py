@@ -1,6 +1,6 @@
 from .hmc import HMC
 from .rwm import RWM
-from .bayes import BayesBase
+from .bayes import Bayes
 
 from . import utils
 from . import diagnostics
