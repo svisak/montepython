@@ -26,6 +26,7 @@ Set some run parameters:
   ell = 100
   epsilon = 0.3
 
+# NOTE: This is outdated, use the BayesBase class instead. Will update the readme soon enough.
 Define the (log) prior, likelihood, and gradient functions:
 
   def lnprior(q):
