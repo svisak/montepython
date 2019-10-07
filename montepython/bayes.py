@@ -27,9 +27,6 @@ class Bayes(ABC):
             raise FloatingPointError(msg)
         return lnposterior_value
 
-    def get_nlp_value(self):
-        return -self.get_lnposterior_value()
-
     def get_lnlikelihood_value(self):
         return self._lnlikelihood_value
 
