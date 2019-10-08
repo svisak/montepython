@@ -16,7 +16,7 @@ def mcmc_to_disk(mcmc, **kwargs):
     dataset_name = kwargs.pop('dataset_name', tmp)
 
     # OPEN FILE IN TRUNCATE-AND-WRITE MODE
-    f = h5py.File(filename, 'w')
+    f = h5py.File(filename, 'a')
 
     # CREATE DATASET WITH THE CHAIN AS DATA
     dset = f.create_dataset(dataset_name, data=mcmc.chain())
