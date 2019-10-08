@@ -73,9 +73,11 @@ class MCMC(ABC):
     def ndim(self):
         return self._metachain.ndim()
 
-    def to_disk(self, filename=None, dataset_name=None, **kwargs):
+    def to_disk(self, path=None, filename=None, dataset_name=None, **kwargs):
         """Save the MCMC chain with metadata in an HDF5 file."""
 
+        if path is not None:
+            kwargs['path'] = path
         if filename is not None:
             kwargs['filename'] = filename
         if dataset_name is not None:
