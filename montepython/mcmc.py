@@ -87,6 +87,7 @@ class MCMC(ABC):
         kwargs['startpos'] = self._metachain.startpos()
         kwargs['mcmc_type'] = self.mcmc_type()
         kwargs['montepython_version'] = montepython.__version__
+        kwargs['n_samples'] = len(self.chain())
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
