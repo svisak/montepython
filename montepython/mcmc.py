@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import sys
+import time
 
 from .state import State
 from .metachain import MetaChain
@@ -51,6 +52,9 @@ class MCMC(ABC):
         # POP OPTIONAL PARAMETERS
         self._temperature = kwargs.pop('temperature', 1.0)
 
+        # SAVE TOTAL SAMPLING TIME
+        self._total_runtime = 0
+
     def set_seed(self, seed):
         """Set the numpy random seed."""
         np.random.seed(seed)
@@ -88,14 +92,17 @@ class MCMC(ABC):
         kwargs['mcmc_type'] = self.mcmc_type()
         kwargs['montepython_version'] = montepython.__version__
         kwargs['n_samples'] = len(self.chain())
+        kwargs['total_runtime'] = self._total_runtime
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
 
     def run(self, n_samples):
         """Run the MCMC sampler for n_samples samples."""
+        t = time.time()
         for i in range(n_samples):
             self.sample()
+        self._total_runtime += time.time() - t
 
     def sample(self):
         # PROPOSE NEW STATE
