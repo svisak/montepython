@@ -5,10 +5,12 @@ Running
 
   python setup.py install
 
-will install montepython to your site-packages directory.
+will install montepython to your site-packages directory, which is in the Python path.
 Alternatively, if you don't have write permission to the default site-packages directory, you can do
 
   python setup.py install --user
+
+If you don't want a system-wide installation you can simply put the package in the same folder as your run script.
 
 
 USAGE
@@ -19,53 +21,80 @@ Import:
   import montepython
   import numpy as np
 
+Define the distribution to be sampled (here a multivariate gaussian) by extending the abstract base class Bayes:
+
+  class MultivariateGaussian(montepython.Bayes):
+
+      # OPTIONAL CUSTOM CONSTRUCTOR
+      def __init__(self, mu, cov):
+          super().__init__()
+          self.mu = mu
+          self.cov = cov
+          self.cov_inv = np.linalg.inv(cov)
+
+      # THIS METHOD IS MANDATORY, NOTE HOW THE DIFFERENT VALUES ARE SET
+      def evaluate(self, position):
+          # PRIOR
+          self.set_lnprior_value(0)
+
+          # LIKELIHOOD
+          diff = position - self.mu
+          lnlikelihood_value = -0.5 * diff.T @ self.cov_inv @ diff
+          self.set_lnlikelihood_value(lnlikelihood_value)
+
+          # NEGATIVE LOG POSTERIOR GRADIENT (HMC ONLY)
+          nlp_gradient_value = self.cov_inv @ diff
+          self.set_nlp_gradient_value(nlp_gradient_value)
+
+
+Note that the nlp_gradient_value will be an array.
+Now instantiate the Bayes object:
+
+  ndim = 2
+  mu = np.zeros(ndim)
+  cov = np.eye(ndim)
+  bayes = MultivariateGaussian(mu, cov)
+
 Set some run parameters:
 
-  dim = 2
-  startpos = np.zeros(dim)
-  ell = 100
-  epsilon = 0.3
+  startpos = np.zeros(ndim)
+  ell = 20 # NUMBER OF LEAPFROG STEPS
+  epsilon = 0.3 # LEAPFROG STEP SIZE
 
-# NOTE: This is outdated, use the BayesBase class instead. Will update the readme soon enough.
-Define the (log) prior, likelihood, and gradient functions:
+Set stepsize instead of ell and epsilon if you're running RWM.
+Now initialize the sampler:
 
-  def lnprior(q):
-      return 0
+  hmc = montepython.HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
 
-  # A simple box distribution
-  def lnlikelihood(q):
-      if np.amax(np.abs(q)) < 5:
-          return 0
-      else:
-          return np.NINF
+And run it for 100 iterations:
 
-  def gradient(q):
-      return 0
+  hmc.run(100)
 
-(Note: the gradient function will probably be changed to be the gradient of the ordinary posterior, as opposed to the NLP, in the future. Also, there will probably be an option to sample non-Bayesian pdf's.)
+If it turns out that 100 samples wasn't enough, you can continue where you left off:
 
-Initialize the sampler:
+  hmc.run(2000)
 
-  hmc = montepython.HMC(gradient=gradient, leapfrog_ell=ell, leapfrog_epsilon=epsilon, dim=dim, startpos=startpos, lnprior=lnprior,  lnlikelihood=lnlikelihood)
-
-And run it:
-
-  n_samples = 100
-  hmc.run(n_samples)
-
-If it turns out that n_samples samples wasn't enough, you can continue where you left off:
-
-  some_more_samples = 2000
-  hmc.run(some_more_samples)
-  # The length of the chain is now n_samples+some_more_samples.
-
+The length of the chain is now 2100.
 Access some information:
 
   print(hmc.acceptance_fraction())
   chain = hmc.chain()
 
-The chain object is a numpy ndarray, which you can now put in a histogram, etc.
 See the methods in the MCMC class for other information that you can access.
+Finally you can save the chain to disk in HDF5 format with optional metadata:
+
+  metadata = {}
+  metadata['some_info'] = 'HMC sampling of a Gaussian'
+  hmc.to_disk(**metadata)
+  # or simply hmc.to_disk(info='My info')
+
+The to_disk method saves a lot of metadata by default, such as acceptance fraction.
+
+Optionally you can set the HDF5 path, filename and dataset name:
+
+  hmc.to_disk(path='my_path', filename='gauss.hdf5', dataset_name='gauss2d')
+
+If the dataset name conflicts with an existing dataset the default dataset name (MCMC-type underscore timestamp) will be used instead.
 
 
 VERSION
