@@ -4,7 +4,7 @@ import copy
 class MetaChain():
     """
     This class is used to store relevant data about the
-    sample process, such as the resulting Markov chain as
+    sampling process, such as the resulting Markov chain as
     a numpy ndarray and the acceptance ratio.
     It also handles updating of the chain after each sample.
 
@@ -25,13 +25,13 @@ class MetaChain():
     def accept(self, state):
         """
         Add state to the chain and increment
-        the index and accepted samples.
+        the number of accepted samples.
         """
         self._states.append(state)
         self._n_accepted += 1
 
     def reject(self):
-        """Copy the previous head to the new head, and increment index."""
+        """Copy the previous head to the new head."""
         self._states.append(copy.deepcopy(self.head()))
 
     def head(self):
@@ -39,7 +39,7 @@ class MetaChain():
         return self._states[-1]
 
     def startpos(self):
-        """Return the first position in the chain."""
+        """Return the starting position of the chain."""
         return self._states[0].get('position')
 
     def chain_with_startpos(self):

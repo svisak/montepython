@@ -98,6 +98,7 @@ class RWMTestCase(unittest.TestCase):
         self.rwm.run(25)
         self.assertEqual(len(self.rwm.chain()), 25)
         self.assertEqual(self.rwm.chain().shape, (25,2))
+        self.assertEqual(len(self.rwm.chain(warmup=10)), 15)
 
 class DiagnosticsTestCase(unittest.TestCase):
 

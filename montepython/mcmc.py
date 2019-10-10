@@ -71,12 +71,14 @@ class MCMC(ABC):
         """Return the acceptance ratio of the samples so far."""
         return self._metachain.acceptance_ratio()
 
-    def chain(self):
+    def chain(self, warmup=0):
         """
         Return the Markov chain resulting from the sampling.
+        Discard the warmup first samples.
         This is an ndarray.
         """
-        return self._metachain.chain()
+        chain = self._metachain.chain()
+        return chain[warmup:, :]
 
     def chain_with_startpos(self):
         """Return the Markov chain including the start position."""
