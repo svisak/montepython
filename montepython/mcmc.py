@@ -55,8 +55,16 @@ class MCMC(ABC):
         # SAVE TOTAL SAMPLING TIME
         self._total_runtime = 0
 
-    def set_seed(self, seed):
-        """Set the numpy random seed."""
+        # NUMPY SEED
+        self._numpy_seed = None
+
+    @property
+    def numpy_seed(self):
+        return self._numpy_seed
+
+    @numpy_seed.setter
+    def numpy_seed(self, seed):
+        self._numpy_seed = seed
         np.random.seed(seed)
 
     def acceptance_fraction(self):
@@ -77,6 +85,10 @@ class MCMC(ABC):
     def ndim(self):
         return self._metachain.ndim()
 
+    @property
+    def total_runtime(self):
+        return self._total_runtime
+
     def to_disk(self, path=None, filename=None, dataset_name=None, **kwargs):
         """Save the MCMC chain with metadata in an HDF5 file."""
 
@@ -92,7 +104,7 @@ class MCMC(ABC):
         kwargs['mcmc_type'] = self.mcmc_type()
         kwargs['montepython_version'] = montepython.__version__
         kwargs['n_samples'] = len(self.chain())
-        kwargs['total_runtime'] = self._total_runtime
+        kwargs['total_runtime'] = self.total_runtime()
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
