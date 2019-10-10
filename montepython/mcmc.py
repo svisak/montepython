@@ -67,9 +67,9 @@ class MCMC(ABC):
         self._numpy_seed = seed
         np.random.seed(seed)
 
-    def acceptance_fraction(self):
-        """Return the acceptance fraction of the samples so far."""
-        return self._metachain.acceptance_fraction()
+    def acceptance_ratio(self):
+        """Return the acceptance ratio of the samples so far."""
+        return self._metachain.acceptance_ratio()
 
     def chain(self):
         """
@@ -98,7 +98,7 @@ class MCMC(ABC):
             kwargs['filename'] = filename
         if dataset_name is not None:
             kwargs['dataset_name'] = dataset_name
-        kwargs['acceptance_fraction'] = self.acceptance_fraction()
+        kwargs['acceptance_ratio'] = self.acceptance_ratio()
         kwargs['ndim'] = self.ndim()
         kwargs['startpos'] = self._metachain.startpos()
         kwargs['mcmc_type'] = self.mcmc_type()

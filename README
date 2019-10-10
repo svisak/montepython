@@ -77,7 +77,7 @@ If it turns out that 100 samples wasn't enough, you can continue where you left 
 The length of the chain is now 2100.
 Access some information:
 
-  print(hmc.acceptance_fraction())
+  print(hmc.acceptance_ratio())
   chain = hmc.chain()
 
 See the methods in the MCMC class for other information that you can access.
@@ -88,7 +88,7 @@ Finally you can save the chain to disk in HDF5 format with optional metadata:
   hmc.to_disk(**metadata)
   # or simply hmc.to_disk(info='My info')
 
-The to_disk method saves a lot of metadata by default, such as acceptance fraction.
+The to_disk method saves a lot of metadata by default, such as acceptance ratio.
 
 Optionally you can set the HDF5 path, filename and dataset name:
 

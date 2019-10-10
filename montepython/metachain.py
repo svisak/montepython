@@ -5,7 +5,7 @@ class MetaChain():
     """
     This class is used to store relevant data about the
     sample process, such as the resulting Markov chain as
-    a numpy ndarray and the acceptance fraction.
+    a numpy ndarray and the acceptance ratio.
     It also handles updating of the chain after each sample.
 
     """
@@ -54,8 +54,8 @@ class MetaChain():
         chain = self.chain_with_startpos()
         return chain[1:, :]
 
-    def acceptance_fraction(self):
-        """Return the current acceptance fraction."""
+    def acceptance_ratio(self):
+        """Return the current acceptance ratio."""
         return self._n_accepted / self.chain_length()
 
     def chain_length(self):
