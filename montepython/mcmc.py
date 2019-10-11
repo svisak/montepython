@@ -106,7 +106,7 @@ class MCMC(ABC):
         kwargs['mcmc_type'] = self.mcmc_type()
         kwargs['montepython_version'] = montepython.__version__
         kwargs['n_samples'] = len(self.chain())
-        kwargs['total_runtime'] = self.total_runtime()
+        kwargs['total_runtime'] = self.total_runtime
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
