@@ -16,8 +16,12 @@ class RWM(MCMC):
         # CREATE THE COVARIANCE MATRIX
         self._covariance = self._stepsize * np.eye(self.ndim())
 
+    @property
+    def stepsize(self):
+        return self._stepsize
+
     def to_disk(self, *args, **kwargs):
-        kwargs['stepsize'] = self._stepsize()
+        kwargs['stepsize'] = self.stepsize
         super().to_disk(*args, **kwargs)
 
     # STATE PROPOSAL
