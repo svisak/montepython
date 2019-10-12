@@ -56,8 +56,10 @@ class RWM(MCMC):
         str = "RWM, {} samples, stepsize {}".format(n, ndim, stepsize)
         return str
 
-    def mcmc_type(self, uppercase=False):
+    def mcmc_type(self, uppercase=False, expand=False):
         if uppercase is True:
             return "RWM"
+        elif expand is True:
+            return "Random Walk Metropolis"
         else:
             return "rwm"

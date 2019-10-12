@@ -111,9 +111,11 @@ class HMC(MCMC):
         str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, ndim, ell, eps)
         return str
 
-    def mcmc_type(self, uppercase=False):
+    def mcmc_type(self, uppercase=False, expand=False):
         if uppercase is True:
             return "HMC"
+        elif expand is True:
+            return "Hamiltonian Monte Carlo"
         else:
             return "hmc"
 

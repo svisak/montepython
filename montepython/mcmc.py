@@ -161,6 +161,6 @@ class MCMC(ABC):
         raise NotImplementedError("Unimplemented abstract method!")
 
     @abstractmethod
-    def mcmc_type(self, uppercase=False):
+    def mcmc_type(self, uppercase=False, expand=False):
         """Return a string with the name of the MCMC algorithm."""
         raise NotImplementedError("Unimplemented abstract method!")
