@@ -20,7 +20,7 @@ class ChainTestCase(unittest.TestCase):
                 metachain = MetaChain(state)
                 self.assertEqual(metachain.chain_with_startpos().shape, (1,i))
                 self.assertEqual(metachain.chain().shape, (0,i))
-                self.assertEqual(metachain.acceptance_ratio(), 1)
+                self.assertEqual(metachain.acceptance_rate(), 1)
 
     def test_accept_reject(self):
         for i in range(1, 6):
@@ -28,9 +28,9 @@ class ChainTestCase(unittest.TestCase):
                 q = self.randpos(i)
                 state = State(position=q)
                 metachain = MetaChain(state)
-                self.assertEqual(metachain.acceptance_ratio(), 1)
+                self.assertEqual(metachain.acceptance_rate(), 1)
                 metachain.reject()
-                self.assertEqual(metachain.acceptance_ratio(), 0.5)
+                self.assertEqual(metachain.acceptance_rate(), 0.5)
                 self.assertTrue((metachain.head().get('position') == q).all())
                 q = self.randpos(i)
                 state = State(position=q)
