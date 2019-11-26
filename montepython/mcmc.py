@@ -105,6 +105,8 @@ class MCMC(ABC):
         kwargs['ndim'] = self.ndim()
         kwargs['startpos'] = self._metachain.startpos()
         kwargs['mcmc_type'] = self.mcmc_type()
+        kwargs['mcmc_type_uppercase'] = self.mcmc_type(uppercase=True)
+        kwargs['mcmc_type_expand'] = self.mcmc_type(expand=True)
         kwargs['montepython_version'] = montepython.__version__
         kwargs['n_samples'] = len(self.chain())
         kwargs['total_runtime'] = self.total_runtime

@@ -23,7 +23,7 @@ class Bayes(ABC):
             return lnlikelihood_value
         lnposterior_value = lnprior_value + lnlikelihood_value
         if np.isnan(lnposterior_value):
-            msg = 'NaN encountered in BayesBase.get_lnposterior_value()'
+            msg = 'NaN encountered in Bayes.get_lnposterior_value()'
             raise FloatingPointError(msg)
         return lnposterior_value
 
