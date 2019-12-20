@@ -64,8 +64,7 @@ class HMC(MCMC):
 
     def draw_momentum(self):
         mean = np.zeros(self.ndim())
-        #cov = np.eye(self.ndim())
-        cov = self.get_inverse_mass_matrix()
+        cov = self.get_mass_matrix()
         return np.random.multivariate_normal(mean, cov)
 
     # JOINT LNPROB
