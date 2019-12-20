@@ -47,4 +47,10 @@ class Bayes(ABC):
 
     @abstractmethod
     def evaluate(self, position):
+        """
+        As a user, this is the method you must implement. Calculate the
+        log prior and log likelihood values as well as the gradient of the
+        negative log posterior (nlp), and set them with the provided set
+        methods. The gradient is only needed for HMC, leave it unset for RWM.
+        """
         raise NotImplementedError("Unimplemented abstract method!")
