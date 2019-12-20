@@ -1,5 +1,7 @@
 from .state import State
 
+import sys
+
 class Leapfrog():
     """Leapfrog solver for HMC."""
 
@@ -8,10 +10,15 @@ class Leapfrog():
         self._ell = ell
         self._epsilon = epsilon
         self._inverse_mass_matrix = inverse_mass_matrix
+        if self._ell < 1:
+            print('Invalid number of leapfrog steps, exiting.', file=sys.stderr())
+            sys.exit(1)
 
     def get_ell(self):
         """Return the nominal number of steps used by the solver."""
-        return self._ell
+        ell = np.random.normal(self._ell, self._ell/3)
+        ell = int(np.ceil(ell))
+        return ell
 
     def get_epsilon(self):
         """Return the nominal step size used by the solver."""
