@@ -32,7 +32,6 @@ class Leapfrog():
 
         ell = self.get_ell()
         epsilon = self.get_epsilon()
-        print(f'ell = {ell}')
 
         # SOLVE
         nlp_gradient = self._bayes.get_nlp_gradient_value()
