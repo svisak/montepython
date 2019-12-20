@@ -22,8 +22,6 @@ class HMC(MCMC):
 
         mass_matrix: (optional)
             The HMC mass matrix to use. A ndim x ndim matrix.
-            [Do not use this yet, as mass matrices other than the default will
-            lead to incorrect results!]
 
         temperature: (optional)
             The sampling temperature. Default: 1. Use with caution for the moment!
