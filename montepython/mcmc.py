@@ -85,6 +85,9 @@ class MCMC(ABC):
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
 
+    def replace_bayes(self, bayes):
+        self._bayes = bayes
+
     def run(self, n_samples):
         """Run the MCMC sampler for n_samples samples."""
         for i in range(n_samples):
