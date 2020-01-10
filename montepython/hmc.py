@@ -53,6 +53,8 @@ class HMC(MCMC):
     def to_disk(self, *args, **kwargs):
         kwargs['leapfrog_ell'] = self._leapfrog.get_ell()
         kwargs['leapfrog_epsilon'] = self._leapfrog.get_epsilon()
+        kwargs['mass_matrix'] = self._mass_matrix
+        kwargs['inverse_mass_matrix'] = self._inverse_mass_matrix
         super().to_disk(*args, **kwargs)
 
     # STATE PROPOSAL
