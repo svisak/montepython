@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import sys
+import os
+import time
 
 from .state import State
 from .metachain import MetaChain
@@ -51,36 +53,65 @@ class MCMC(ABC):
         # POP OPTIONAL PARAMETERS
         self._temperature = kwargs.pop('temperature', 1.0)
 
-    def set_seed(self, seed):
-        """Set the numpy random seed."""
+        # SAVE TOTAL SAMPLING TIME
+        self._total_runtime = 0
+
+        # NUMPY SEED
+        self._numpy_seed = None
+
+    @property
+    def numpy_seed(self):
+        return self._numpy_seed
+
+    @numpy_seed.setter
+    def numpy_seed(self, seed):
+        self._numpy_seed = seed
         np.random.seed(seed)
 
-    def acceptance_fraction(self):
-        """Return the acceptance fraction of the samples so far."""
-        return self._metachain.acceptance_fraction()
+    def acceptance_rate(self):
+        """Return the acceptance rate of the samples so far."""
+        return self._metachain.acceptance_rate()
 
-    def chain(self):
+    def chain(self, warmup=0):
         """
         Return the Markov chain resulting from the sampling.
+        Discard the warmup first samples.
         This is an ndarray.
         """
-        return self._metachain.chain()
+        chain = self._metachain.chain()
+        return chain[warmup:, :]
+
+    def chain_with_startpos(self):
+        """Return the Markov chain including the start position."""
+        return self._metachain.chain_with_startpos()
 
     def ndim(self):
         return self._metachain.ndim()
 
-    def to_disk(self, filename=None, dataset_name=None, **kwargs):
+    @property
+    def total_runtime(self):
+        return self._total_runtime
+
+    def to_disk(self, path=None, filename=None, dataset_name=None, **kwargs):
         """Save the MCMC chain with metadata in an HDF5 file."""
 
+        if path is not None:
+            kwargs['path'] = path
         if filename is not None:
             kwargs['filename'] = filename
         if dataset_name is not None:
             kwargs['dataset_name'] = dataset_name
-        kwargs['acceptance_fraction'] = self.acceptance_fraction()
+        kwargs['acceptance_rate'] = self.acceptance_rate()
         kwargs['ndim'] = self.ndim()
         kwargs['startpos'] = self._metachain.startpos()
         kwargs['mcmc_type'] = self.mcmc_type()
+        kwargs['mcmc_type_uppercase'] = self.mcmc_type(uppercase=True)
+        kwargs['mcmc_type_expand'] = self.mcmc_type(expand=True)
         kwargs['montepython_version'] = montepython.__version__
+        kwargs['n_samples'] = len(self.chain())
+        kwargs['total_runtime'] = self.total_runtime
+        kwargs['n_cores'] = os.cpu_count()
+        kwargs['cpu_hours'] = self.total_runtime * os.cpu_count() / 3600
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
@@ -90,8 +121,10 @@ class MCMC(ABC):
 
     def run(self, n_samples):
         """Run the MCMC sampler for n_samples samples."""
+        t = time.time()
         for i in range(n_samples):
             self.sample()
+        self._total_runtime += time.time() - t
 
     def sample(self):
         # PROPOSE NEW STATE
@@ -136,6 +169,6 @@ class MCMC(ABC):
         raise NotImplementedError("Unimplemented abstract method!")
 
     @abstractmethod
-    def mcmc_type(self, uppercase=False):
+    def mcmc_type(self, uppercase=False, expand=False):
         """Return a string with the name of the MCMC algorithm."""
         raise NotImplementedError("Unimplemented abstract method!")

@@ -3,7 +3,7 @@
 import unittest
 import numpy as np
 
-from montepython.bayes import BayesBase
+from montepython.bayes import Bayes
 from montepython.hmc import HMC
 from montepython.rwm import RWM
 from montepython.state import State
@@ -18,8 +18,9 @@ class ChainTestCase(unittest.TestCase):
             with self.subTest(i=i):
                 state = State(position=self.randpos(i))
                 metachain = MetaChain(state)
-                self.assertEqual(metachain.chain().shape, (1,i))
-                self.assertEqual(metachain.acceptance_fraction(), 1)
+                self.assertEqual(metachain.chain_with_startpos().shape, (1,i))
+                self.assertEqual(metachain.chain().shape, (0,i))
+                self.assertEqual(metachain.acceptance_rate(), 1)
 
     def test_accept_reject(self):
         for i in range(1, 6):
@@ -27,9 +28,9 @@ class ChainTestCase(unittest.TestCase):
                 q = self.randpos(i)
                 state = State(position=q)
                 metachain = MetaChain(state)
-                self.assertEqual(metachain.acceptance_fraction(), 1)
+                self.assertEqual(metachain.acceptance_rate(), 1)
                 metachain.reject()
-                self.assertEqual(metachain.acceptance_fraction(), 0.5)
+                self.assertEqual(metachain.acceptance_rate(), 0.5)
                 self.assertTrue((metachain.head().get('position') == q).all())
                 q = self.randpos(i)
                 state = State(position=q)
@@ -41,7 +42,7 @@ class ChainTestCase(unittest.TestCase):
 
 class HMCTestCase(unittest.TestCase):
 
-    class Bayes(BayesBase):
+    class Bayes(Bayes):
     
         def __init__(self):
             super().__init__()
@@ -49,7 +50,7 @@ class HMCTestCase(unittest.TestCase):
         def evaluate(self, position):
             self.set_lnlikelihood_value(1)
             self.set_lnprior_value(1)
-            self.set_gradient_value(np.ones(10))
+            self.set_nlp_gradient_value(np.ones(10))
 
     def setUp(self):
         bayes = self.Bayes()
@@ -59,11 +60,11 @@ class HMCTestCase(unittest.TestCase):
         self.hmc = HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
 
     def test_chain_size(self):
-        self.assertEqual(len(self.hmc.chain()), 1)
-        self.assertEqual(self.hmc.chain().shape, (1,10))
+        self.assertEqual(len(self.hmc.chain()), 0)
+        self.assertEqual(self.hmc.chain().shape, (0,10))
         self.hmc.run(50)
-        self.assertEqual(len(self.hmc.chain()), 51)
-        self.assertEqual(self.hmc.chain().shape, (51,10))
+        self.assertEqual(len(self.hmc.chain()), 50)
+        self.assertEqual(self.hmc.chain().shape, (50,10))
 
     def test_potential(self):
         dummy_state = State(position=0, lnposterior=2)
@@ -75,7 +76,7 @@ class HMCTestCase(unittest.TestCase):
 
 class RWMTestCase(unittest.TestCase):
 
-    class Bayes(BayesBase):
+    class Bayes(Bayes):
     
         def __init__(self):
             super().__init__()
@@ -92,13 +93,14 @@ class RWMTestCase(unittest.TestCase):
         self.rwm = RWM(bayes, startpos, stepsize=stepsize)
 
     def test_chain_size(self):
-        self.assertEqual(len(self.rwm.chain()), 1)
-        self.assertEqual(self.rwm.chain().shape, (1,2))
+        self.assertEqual(len(self.rwm.chain()), 0)
+        self.assertEqual(self.rwm.chain().shape, (0,2))
         self.rwm.run(25)
-        self.assertEqual(len(self.rwm.chain()), 26)
-        self.assertEqual(self.rwm.chain().shape, (26,2))
+        self.assertEqual(len(self.rwm.chain()), 25)
+        self.assertEqual(self.rwm.chain().shape, (25,2))
+        self.assertEqual(len(self.rwm.chain(warmup=10)), 15)
 
-class UtilsTestCase(unittest.TestCase):
+class DiagnosticsTestCase(unittest.TestCase):
 
     def test_autocorrelation_small(self):
         chain = np.empty((10, 1))
@@ -127,14 +129,13 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_relative_error(self):
         chain = np.array([[1, 4], [2, 5], [3, 6]])
-        print(chain.shape)
         rel_err = diagnostics.relative_error(chain)
         correct = np.sqrt(1/3) * np.array([1/2, 1/5])
         self.assertTrue((np.abs(rel_err-correct) < 0.00001).all())
 
 class BatchTestCase(unittest.TestCase):
 
-    class Bayes(BayesBase):
+    class Bayes(Bayes):
     
         def __init__(self):
             super().__init__()
@@ -142,7 +143,7 @@ class BatchTestCase(unittest.TestCase):
         def evaluate(self, position):
             self.set_lnlikelihood_value(1)
             self.set_lnprior_value(1)
-            self.set_gradient_value(np.ones(10))
+            self.set_nlp_gradient_value(np.ones(10))
 
     def setUp(self):
         bayes = self.Bayes()
@@ -152,12 +153,15 @@ class BatchTestCase(unittest.TestCase):
         self.hmc = HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
 
     def test_chain_size(self):
-        self.assertEqual(len(self.hmc.chain()), 1)
-        self.assertEqual(self.hmc.chain().shape, (1,10))
+        self.assertEqual(len(self.hmc.chain_with_startpos()), 1)
+        self.assertEqual(len(self.hmc.chain()), 0)
+        self.assertEqual(self.hmc.chain_with_startpos().shape, (1,10))
+        self.assertEqual(self.hmc.chain().shape, (0,10))
         for n in [10, 10, 10, 10, 10, 2]:
             self.hmc.run(n)
-        self.assertEqual(len(self.hmc.chain()), 53)
-        self.assertEqual(self.hmc.chain().shape, (53,10))
+        self.assertEqual(len(self.hmc.chain_with_startpos()), 53)
+        self.assertEqual(len(self.hmc.chain()), 52)
+        self.assertEqual(self.hmc.chain().shape, (52,10))
 
 if __name__ == '__main__':
     unittest.main()

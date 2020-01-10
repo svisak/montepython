@@ -16,8 +16,12 @@ class RWM(MCMC):
         # CREATE THE COVARIANCE MATRIX
         self._covariance = self._stepsize * np.eye(self.ndim())
 
-    def to_disk(self, *args, kwargs={}):
-        kwargs['stepsize'] = self._stepsize()
+    @property
+    def stepsize(self):
+        return self._stepsize
+
+    def to_disk(self, *args, **kwargs):
+        kwargs['stepsize'] = self.stepsize
         super().to_disk(*args, **kwargs)
 
     # STATE PROPOSAL
@@ -52,8 +56,10 @@ class RWM(MCMC):
         str = "RWM, {} samples, stepsize {}".format(n, ndim, stepsize)
         return str
 
-    def mcmc_type(self, uppercase=False):
+    def mcmc_type(self, uppercase=False, expand=False):
         if uppercase is True:
             return "RWM"
+        elif expand is True:
+            return "Random Walk Metropolis"
         else:
             return "rwm"

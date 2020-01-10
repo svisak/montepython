@@ -4,8 +4,8 @@ import copy
 class MetaChain():
     """
     This class is used to store relevant data about the
-    sample process, such as the resulting Markov chain as
-    a numpy ndarray and the acceptance fraction.
+    sampling process, such as the resulting Markov chain as
+    a numpy ndarray and the acceptance rate.
     It also handles updating of the chain after each sample.
 
     """
@@ -25,13 +25,13 @@ class MetaChain():
     def accept(self, state):
         """
         Add state to the chain and increment
-        the index and accepted samples.
+        the number of accepted samples.
         """
         self._states.append(state)
         self._n_accepted += 1
 
     def reject(self):
-        """Copy the previous head to the new head, and increment index."""
+        """Copy the previous head to the new head."""
         self._states.append(copy.deepcopy(self.head()))
 
     def head(self):
@@ -39,18 +39,23 @@ class MetaChain():
         return self._states[-1]
 
     def startpos(self):
-        """Return the first position in the chain."""
+        """Return the starting position of the chain."""
         return self._states[0].get('position')
 
-    def chain(self):
-        """Return the Markov chain."""
+    def chain_with_startpos(self):
+        """Return the Markov chain including startpos."""
         chain = np.empty((self.chain_length(), self.ndim()))
         for i in range(self.chain_length()):
             chain[i, :] = self._states[i].get('position')
         return chain
 
-    def acceptance_fraction(self):
-        """Return the current acceptance fraction."""
+    def chain(self):
+        """Return the Markov chain, excluding the start position."""
+        chain = self.chain_with_startpos()
+        return chain[1:, :]
+
+    def acceptance_rate(self):
+        """Return the current acceptance rate."""
         return self._n_accepted / self.chain_length()
 
     def chain_length(self):

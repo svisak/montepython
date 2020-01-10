@@ -9,14 +9,33 @@ def autocorrelation(chain, max_lag):
     Return an ndarray containing the autocorrelations for each
     dimension of the chain separately.
 
-    The shape of the returned array is (max_lag+1, ndim).
+    The shape of the returned array is
+        -> (max_lag+1, ndim) if the shape of chain is (n_samples, ndim)
+        -> (max_lag+1,) if the shape of the chain is (n_samples,).
     """
-    ndim = chain.shape[1]
-    acors = np.empty((max_lag+1, ndim))
     if max_lag > len(chain)/5:
+        # The calculation doesn't make sense if
+        # the maximum lag is too close to the full chain length
         warnings.warn('max_lag is more than one fifth the chain length')
+
+    # Reshape chains of shape (length,) to (length, 1),
+    # and remember that we did this
+    reshaped = False
+    ndim = 1
+    try:
+        ndim = chain.shape[1]
+    except IndexError:
+        chain = chain.reshape(-1, ndim)
+        reshaped = True
+
+    # Storage space for the autocorrelations
+    acors = np.empty((max_lag+1, ndim))
+
+    # Treat each dimension separately
     for dim in range(ndim):
+        # Subtract the average
         chain1d = chain[:, dim] - np.average(chain[:, dim])
+        # Calculate the autocorrelation for 0 <= lag <= max_lag
         for lag in range(max_lag+1):
             unshifted = None
             shifted = chain1d[lag:]
@@ -24,9 +43,14 @@ def autocorrelation(chain, max_lag):
                 unshifted = chain1d
             else:
                 unshifted = chain1d[:-lag]
+            # Normalization
             normalization = np.sqrt(np.dot(unshifted, unshifted))
             normalization *= np.sqrt(np.dot(shifted, shifted))
+            # Save the result
             acors[lag, dim] = np.dot(unshifted, shifted) / normalization
+    if reshaped is True:
+        # Reshape acors to match the shape of the input chain
+        acors = acors.reshape(-1,)
     return acors
 
 def exponential_function(lag, tao, offset):

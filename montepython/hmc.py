@@ -22,8 +22,6 @@ class HMC(MCMC):
 
         mass_matrix: (optional)
             The HMC mass matrix to use. A ndim x ndim matrix.
-            [Do not use this yet, as mass matrices other than the default will
-            lead to incorrect results!]
 
         temperature: (optional)
             The sampling temperature. Default: 1. Use with caution for the moment!
@@ -31,11 +29,8 @@ class HMC(MCMC):
     """
 
     def __init__(self, bayes, startpos, **kwargs):
-
         # CALL SUPERCLASS CONSTRUCTOR
         super().__init__(bayes, startpos, **kwargs)
-        self._metachain.head().set('momentum', self.draw_momentum())
-        self._metachain.head().set('gradient', self._bayes.get_gradient_value())
 
         # POP MANDATORY PARAMETERS
         ell = kwargs.pop('leapfrog_ell')
@@ -50,9 +45,16 @@ class HMC(MCMC):
         tmp = self._inverse_mass_matrix
         self._leapfrog = Leapfrog(self._bayes, ell, epsilon, tmp)
 
-    def to_disk(self, *args, kwargs={}):
+        # SET INITIAL VALUES
+        self._metachain.head().set('momentum', self.draw_momentum())
+        self._metachain.head().set('nlp_gradient', self._bayes.get_nlp_gradient_value())
+
+
+    def to_disk(self, *args, **kwargs):
         kwargs['leapfrog_ell'] = self._leapfrog.get_ell()
         kwargs['leapfrog_epsilon'] = self._leapfrog.get_epsilon()
+        kwargs['mass_matrix'] = self._mass_matrix
+        kwargs['inverse_mass_matrix'] = self._inverse_mass_matrix
         super().to_disk(*args, **kwargs)
 
     # STATE PROPOSAL
@@ -62,7 +64,7 @@ class HMC(MCMC):
 
     def draw_momentum(self):
         mean = np.zeros(self.ndim())
-        cov = np.eye(self.ndim())
+        cov = self.get_mass_matrix()
         return np.random.multivariate_normal(mean, cov)
 
     # JOINT LNPROB
@@ -87,7 +89,7 @@ class HMC(MCMC):
     def kinetic(self, state):
         momentum = state.get('momentum')
         inv = self.get_inverse_mass_matrix()
-        kinetic_energy = momentum @ inv @ momentum
+        kinetic_energy = momentum.T @ inv @ momentum
         kinetic_energy /= 2
         if np.isnan(kinetic_energy):
             msg = 'NaN: Energy.kinetic at momentum = {}'.format(momentum)
@@ -111,9 +113,11 @@ class HMC(MCMC):
         str = "HMC, {} samples, {} leapfrog steps of length {}".format(n, ndim, ell, eps)
         return str
 
-    def mcmc_type(self, uppercase=False):
+    def mcmc_type(self, uppercase=False, expand=False):
         if uppercase is True:
             return "HMC"
+        elif expand is True:
+            return "Hamiltonian Monte Carlo"
         else:
             return "hmc"
 
