@@ -14,7 +14,7 @@ class RWM(MCMC):
         self._stepsize = kwargs.pop('stepsize', 1.0)
 
         # CREATE THE COVARIANCE MATRIX
-        self._covariance = self._stepsize * np.eye(self.ndim())
+        self._covariance = (self._stepsize ** 2) * np.eye(self.ndim())
 
     @property
     def stepsize(self):
