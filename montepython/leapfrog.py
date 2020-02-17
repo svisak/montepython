@@ -16,21 +16,28 @@ class Leapfrog():
                                                                 file=sys.stderr)
             sys.exit(1)
 
+    def get_epsilon(self):
+        """Return the step size used by the solver."""
+        return self._epsilon
+
     def get_ell(self):
         """Return the nominal number of steps used by the solver."""
+        return self._ell
+
+    def _draw_ell(self):
+        """
+        Draw a random number of steps from a Gaussian distribution
+        centered around self._ell.
+        """
         ell = np.random.normal(self._ell, self._ell/3)
         ell = int(np.ceil(ell))
         return ell
-
-    def get_epsilon(self):
-        """Return the nominal step size used by the solver."""
-        return self._epsilon
 
     def solve(self, initial_state):
         position = initial_state.get('position')
         momentum = initial_state.get('momentum')
 
-        ell = self.get_ell()
+        ell = self._draw_ell()
         epsilon = self.get_epsilon()
 
         # SOLVE
