@@ -12,7 +12,7 @@ class MetaChain():
 
     def __init__(self, initial_state):
         self._states = []
-        self._n_accepted = 0
+        self._n_accepted = -1
         self.accept(initial_state)
 
     def reset(self):
@@ -55,8 +55,11 @@ class MetaChain():
         return chain[1:, :]
 
     def acceptance_rate(self):
-        """Return the current acceptance rate."""
-        return self._n_accepted / self.chain_length()
+        """
+        Return the current acceptance rate.
+        The start position is not included in the calculation.
+        """
+        return self._n_accepted / (self.chain_length()-1)
 
     def chain_length(self):
         """
