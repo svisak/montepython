@@ -4,10 +4,13 @@ import copy
 class MetaChain():
     """
     This class is used to store relevant data about the
-    sampling process, such as the resulting Markov chain as
-    a numpy ndarray and the acceptance rate.
-    It also handles updating of the chain after each sample.
-
+    sampling process, such as the resulting Markov chain
+    and the acceptance rate.
+    This, in combination with State, is a very versatile class,
+    allowing for consistent storage of almost any information
+    about the samples. For example, the posterior value of the
+    latest accepted sample is stored here in order to avoid
+    unnecessary recomputations.
     """
 
     def __init__(self, initial_state):

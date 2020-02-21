@@ -3,10 +3,15 @@ import numpy as np
 
 class Bayes(ABC):
     """Abstract Bayes class. As a user, you should implement your likelihood
-    and prior here. Do this by extending the class and implementing the
-    abstract evaluate method, wherein you set the current values of the
-    log likelihood and the log prior as well as the gradient of the
-    negative log posterior. These are set with the "set_{}_value" methods.
+    and prior here. If you're using the HMC algorithm you must also implement
+    the gradient of the negative log posterior.
+
+    Do this by extending the class and implementing the abstract 'evaluate'
+    method, wherein you set the current values of the log likelihood and the
+    log prior as well as the gradient of the negative log posterior.
+    These are set with the "set_{}_value" methods.
+
+    Feel free to add any methods you like to your inheriting class.
     """
 
     def __init__(self):
