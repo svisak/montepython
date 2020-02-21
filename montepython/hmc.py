@@ -33,8 +33,13 @@ class HMC(MCMC):
         super().__init__(bayes, startpos, **kwargs)
 
         # POP MANDATORY PARAMETERS
-        ell = kwargs.pop('leapfrog_ell')
-        epsilon = kwargs.pop('leapfrog_epsilon')
+        # n_timesteps, dt are just alternate names for ell and epsilon.
+        ell = kwargs.pop('n_timesteps', None)
+        if ell is None:
+            ell = kwargs.pop('leapfrog_ell')
+        epsilon = kwargs.pop('dt', None)
+        if epsilon is None:
+            epsilon = kwargs.pop('leapfrog_epsilon')
 
         # POP OPTIONAL PARAMETERS
         default_mass_matrix = np.eye(self.ndim())
