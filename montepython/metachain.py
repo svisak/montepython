@@ -59,6 +59,8 @@ class MetaChain():
         Return the current acceptance rate.
         The start position is not included in the calculation.
         """
+        if 0 == self.chain_length()-1:
+            return 0.
         return self._n_accepted / (self.chain_length()-1)
 
     def chain_length(self):
