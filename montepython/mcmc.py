@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import sys
 import os
+import socket
+import sys
 import time
 
 from .state import State
@@ -112,6 +113,7 @@ class MCMC(ABC):
         kwargs['total_runtime'] = self.total_runtime
         kwargs['n_cores'] = os.cpu_count()
         kwargs['cpu_hours'] = self.total_runtime * os.cpu_count() / 3600
+        kwargs['hostname'] = socket.gethostname()
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
