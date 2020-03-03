@@ -10,6 +10,9 @@ def timestamp():
 def mcmc_to_disk(mcmc, **kwargs):
     """Save the MCMC chain to disk with the metadata supplied in kwargs."""
 
+    # CHECK WETHER TO TRUNCATE FILE
+    mode = kwargs.pop('mode', 'a')
+
     # PATH; CREATE IF IT DOESN'T EXIST
     default_path = 'hdf5'
     path = kwargs.pop('path', default_path)
@@ -24,7 +27,7 @@ def mcmc_to_disk(mcmc, **kwargs):
     filename = kwargs.pop('filename', default_filename)
 
     # OPEN FILE IN READ/WRITE/CREATE MODE
-    f = h5py.File(f'{path}/{filename}', 'a')
+    f = h5py.File(f'{path}/{filename}', mode)
 
     # DATASET NAME
     default_dataset_name = f'{mcmc.mcmc_type()}_{timestamp()}'
