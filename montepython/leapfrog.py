@@ -24,13 +24,25 @@ class Leapfrog():
         """Return the nominal number of steps used by the solver."""
         return self._ell
 
+    def _draw_epsilon(self):
+        """
+        Draw a random step size from a uniform distribution
+        centered around self._epsilon.
+        """
+        low = self._epsilon / 2
+        high = self._epsilon * 2
+        epsilon = np.random.uniform(low, high)
+        return epsilon
+
     def _draw_ell(self):
         """
-        Draw a random number of steps from a Gaussian distribution
+        Draw a random number of steps from a uniform distribution
         centered around self._ell.
         """
-        ell = np.random.normal(self._ell, self._ell/3)
-        ell = int(np.ceil(ell))
+        half_ell = self._ell // 2
+        low = self._ell - half_ell # The lower bound is inclusive
+        high = self._ell + half_ell + 1 # The upper bound is exclusive so add 1
+        ell = np.random.randint(low, high)
         return ell
 
     def solve(self, initial_state):
@@ -38,7 +50,7 @@ class Leapfrog():
         momentum = initial_state.get('momentum')
 
         ell = self._draw_ell()
-        epsilon = self.get_epsilon()
+        epsilon = self._draw_epsilon()
 
         # SOLVE
         nlp_gradient = self._bayes.get_nlp_gradient_value()
