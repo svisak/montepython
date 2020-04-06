@@ -2,7 +2,7 @@
 
 import warnings
 import numpy as np
-import scipy
+import scipy.optimize
 
 def autocorrelation(chain, max_lag):
     """
@@ -57,8 +57,12 @@ def exponential_function(lag, tao, offset):
     return np.exp(-lag/tao) + offset
 
 def autocorrelation_time(acors):
-    tao = scipy.optimize.curve_fit(exponential_function, lags, acors)[0][0]
-    return tao
+    max_lag = len(acors)
+    lags = np.array(range(max_lag))
+    tao = []
+    for i in range(acors.shape[1]):
+        tao.append(scipy.optimize.curve_fit(exponential_function, lags, acors[:, i])[0][0])
+    return np.array(tao)
 
 def most_correlated(acors):
     maximum = 0
