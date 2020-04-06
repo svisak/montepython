@@ -17,7 +17,7 @@ class Leapfrog():
             sys.exit(1)
 
     def get_epsilon(self):
-        """Return the step size used by the solver."""
+        """Return the nominal step size used by the solver."""
         return self._epsilon
 
     def get_ell(self):
