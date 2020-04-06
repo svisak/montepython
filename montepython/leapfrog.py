@@ -29,8 +29,9 @@ class Leapfrog():
         Draw a random step size from a uniform distribution
         centered around self._epsilon.
         """
-        low = self._epsilon / 2
-        high = self._epsilon * 2
+        half_epsilon = self._epsilon / 2
+        low = self._epsilon - half_epsilon
+        high = self._epsilon + half_epsilon
         epsilon = np.random.uniform(low, high)
         return epsilon
 
