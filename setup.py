@@ -6,14 +6,14 @@ import subprocess
 with open('README') as f:
     readme = f.read()
 
-#cmd = 'git describe --abbrev=0'
-#version = subprocess.check_output(cmd, shell=True).decode('utf-8')
-cmd = 'git describe --dirty'
-dirty_version = subprocess.check_output(cmd, shell=True).decode('utf-8')
+#cmd = 'git describe --dirty'
+cmd = ['git', 'describe', '--tags', '--abbrev=0']
+version = subprocess.run(cmd, stdout=subprocess.PIPE)
+version = version.stdout.decode('utf-8').strip()
 
 setup(
     name='montepython',
-    version=dirty_version,
+    version=version,
     description='Markov chain Monte Carlo algorithms',
     author='Isak Svensson',
     author_email='isak.svensson@chalmers.se',
