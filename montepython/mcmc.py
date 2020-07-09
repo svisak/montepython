@@ -8,6 +8,7 @@ import time
 from .state import State
 from .metachain import MetaChain
 from .utils import mcmc_to_disk
+from .utils import convert_to_seconds
 import montepython
 
 
@@ -127,6 +128,19 @@ class MCMC(ABC):
         for i in range(n_samples):
             self.sample()
         self._total_runtime += time.time() - t
+
+    def run_for(self, t_limit, unit='hours'):
+        """
+        Run the MCMC sampler for the specified length of time.
+        Valid units are 'minutes', 'hours', and 'days'.
+        """
+        t_limit = convert_to_seconds(t_limit, unit)
+        t_start = time.time()
+        t_elapsed = 0
+        while t_elapsed < timelimit:
+            self.sample()
+            t_elapsed = time.time() - t_start
+        self._total_runtime += t_elapsed
 
     def sample(self):
         # PROPOSE NEW STATE
