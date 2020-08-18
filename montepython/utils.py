@@ -2,7 +2,7 @@
 
 import time
 import h5py
-import os
+import pathlib
 
 def timestamp():
     return time.strftime("%Y%m%d_%H%M%S", time.gmtime())
@@ -26,11 +26,7 @@ def mcmc_to_disk(mcmc, **kwargs):
     # PATH; CREATE IF IT DOESN'T EXIST
     default_path = 'hdf5'
     path = kwargs.pop('path', default_path)
-    try:
-        os.mkdir(path)
-        print(f'Directory \'{path}\' does not exist, creating it')
-    except FileExistsError:
-        pass
+    pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
     # FILENAME
     default_filename = f'{mcmc.mcmc_type()}.hdf5'
