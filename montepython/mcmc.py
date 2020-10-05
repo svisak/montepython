@@ -112,9 +112,15 @@ class MCMC(ABC):
         kwargs['montepython_version'] = montepython.__version__
         kwargs['n_samples'] = len(self.chain())
         kwargs['total_runtime'] = self.total_runtime
-        kwargs['n_cores'] = os.cpu_count()
-        kwargs['cpu_hours'] = self.total_runtime * os.cpu_count() / 3600
         kwargs['hostname'] = socket.gethostname()
+
+        # CPU hours
+        try:
+            kwargs['n_cores'] = int(os.environ['SLURM_NTASKS'])
+        except KeyError:
+            kwargs['n_cores'] = os.cpu_count()
+        kwargs['cpu_hours'] = self.total_runtime * kwargs['n_cores'] / 3600
+
         for key, value in kwargs.items():
             kwargs[key] = value
         mcmc_to_disk(self, **kwargs)
