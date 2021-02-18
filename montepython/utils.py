@@ -40,13 +40,14 @@ def mcmc_to_disk(mcmc, **kwargs):
     dataset_name = kwargs.pop('dataset_name', default_dataset_name)
 
     # CREATE DATASET WITH THE CHAIN AS DATA
-    try:
-        dset = f.create_dataset(dataset_name, data=mcmc.chain())
-    except OSError:
-        # DATASET ALREADY EXISTS, USE DEFAULT AS BACKUP
-        print(f'Dataset \'{dataset_name}\' already exists, using \'{default_dataset_name}\' instead')
-        dataset_name = default_dataset_name
-        dset = f.create_dataset(dataset_name, data=mcmc.chain())
+    chain = mcmc.chain()
+    ndim = chain.shape[1]
+    dset = f.get(dataset_name)
+    if dset is None:
+        dset = f.create_dataset(dataset_name, data=chain, maxshape=(None,ndim))
+    else:
+        dset.resize(chain.shape)
+        dset[...] = chain
 
     # PRINT INFORMATION
     print(f'Wrote dataset \'{dataset_name}\' to file \'{path}/{filename}\'')
