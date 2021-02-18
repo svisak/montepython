@@ -87,6 +87,10 @@ class MCMC(ABC):
         """Return the Markov chain including the start position."""
         return self._metachain.chain_with_startpos()
 
+    @property
+    def metachain(self):
+        return self._metachain
+
     def ndim(self):
         return self._metachain.ndim()
 
@@ -161,6 +165,11 @@ class MCMC(ABC):
         if 0 > diff:
             metropolis_ratio = np.exp(diff / self._temperature)
         acceptance_probability = metropolis_ratio
+
+        # SAVE USER-SUPPLIED INFO ABOUT THE PROPOSED STATE
+        for key, value in self._bayes.state_info().items():
+            if key not in proposed_state.dict():
+                proposed_state.set(key, value)
 
         # ACCEPT / REJECT
         if np.random.rand() < acceptance_probability:

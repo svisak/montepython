@@ -50,6 +50,15 @@ class Bayes(ABC):
     def set_nlp_gradient_value(self, val):
         self._nlp_gradient_value = val
 
+    def state_info(self):
+        """
+        If this method returns a dictionary, each item in the dictionary will
+        be saved in the State object that stores the current MCMC sample.
+        Use it to save information that varies depending on where in the
+        parameter space the sample is taken.
+        """
+        return {}
+
     @abstractmethod
     def evaluate(self, position):
         """

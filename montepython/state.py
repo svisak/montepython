@@ -12,3 +12,6 @@ class State():
 
     def set(self, key, value):
         self._dict[key] = copy.deepcopy(value)
+
+    def dict(self):
+        return self._dict
