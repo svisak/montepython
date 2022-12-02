@@ -151,6 +151,17 @@ class MCMC(ABC):
             t_elapsed = time.time() - t_start
         self._total_runtime += t_elapsed
 
+    def batched_run_for(self, t_limit, n_batches, unit='hours', path=None, filename=None, dataset_name=None, acceptance_rate_limit=0.2, **metadata):
+        for i in range(n_batches):
+            t = time.time()
+            self.run_for(t_limit)
+            print(f'Finished batch in {time.time()-t:.0f} s')
+            print(f'Acceptance rate: {self.acceptance_rate()}')
+            path, filename, dataset_name = self.to_disk(path=path, filename=filename, dataset_name=dataset_name, mode='a', **metadata)
+        if self.acceptance_rate() < acceptance_rate_limit:
+            print(f'Low acceptance rate ({self.acceptance_rate()}), terminating')
+            sys.exit(1)
+
     def sample(self):
         # PROPOSE NEW STATE
         current_state = self._metachain.head()
