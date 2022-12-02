@@ -68,3 +68,55 @@ class Bayes(ABC):
         methods. The gradient is only needed for HMC, leave it unset for RWM.
         """
         raise NotImplementedError("Unimplemented abstract method!")
+
+
+class PosteriorSpec(ABC):
+    """Abstract Bayes class. As a user, you should implement your posterior
+    here. If you're using the HMC algorithm you must also implement
+    the gradient of either the log posterior or the negative log posterior.
+
+    Do this by extending the class and implementing the abstract 'evaluate'
+    method, wherein you set the current values of the log likelihood and the
+    log prior as well as the gradient of the negative log posterior.
+    These are set with the "set_{}_value" methods.
+
+    Feel free to add any methods you like to your inheriting class.
+    """
+
+    def __init__(self):
+        self._lnposterior_value = None
+        self._nlp_gradient_value = None
+
+    def get_lnposterior_value(self):
+        return self._lnposterior_value
+
+    def get_nlp_gradient_value(self):
+        return self._nlp_gradient_value
+
+    def set_lnposterior_value(self, val):
+        self._lnposterior_value = val
+
+    def set_nlp_gradient_value(self, val):
+        self._nlp_gradient_value = val
+
+    def set_lnposterior_gradient(self, val):
+        self.set_nlp_gradient_value(-val)
+
+    def state_info(self):
+        """
+        If this method returns a dictionary, each item in the dictionary will
+        be saved in the State object that stores the current MCMC sample.
+        Use it to save information that varies depending on where in the
+        parameter space the sample is taken.
+        """
+        return {}
+
+    @abstractmethod
+    def evaluate(self, position):
+        """
+        As a user, this is the method you must implement. Calculate the
+        log prior and log likelihood values as well as the gradient of the
+        negative log posterior (nlp), and set them with the provided set
+        methods. The gradient is only needed for HMC, leave it unset for RWM.
+        """
+        raise NotImplementedError("Unimplemented abstract method!")
