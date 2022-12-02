@@ -22,7 +22,7 @@ class RWM(MCMC):
 
     def to_disk(self, *args, **kwargs):
         kwargs['stepsize'] = self.stepsize
-        super().to_disk(*args, **kwargs)
+        return super().to_disk(*args, **kwargs)
 
     # STATE PROPOSAL
     def propose_state(self, current_state):

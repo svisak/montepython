@@ -7,8 +7,7 @@ import time
 
 from .state import State
 from .metachain import MetaChain
-from .utils import mcmc_to_disk
-from .utils import convert_to_seconds
+from .utils import mcmc_to_disk, convert_to_seconds
 import montepython
 
 
@@ -127,7 +126,7 @@ class MCMC(ABC):
 
         for key, value in kwargs.items():
             kwargs[key] = value
-        mcmc_to_disk(self, **kwargs)
+        return mcmc_to_disk(self, **kwargs)
 
     def replace_bayes(self, bayes):
         self._bayes = bayes

@@ -2,6 +2,7 @@
 
 import time
 import h5py
+import os
 import pathlib
 
 def timestamp():
@@ -20,24 +21,30 @@ def convert_to_seconds(t, unit):
 def mcmc_to_disk(mcmc, **kwargs):
     """Save the MCMC chain to disk with the metadata supplied in kwargs."""
 
-    # CHECK WETHER TO TRUNCATE FILE
+    # CHECK WHETHER TO TRUNCATE FILE
     mode = kwargs.pop('mode', 'a')
 
     # PATH; CREATE IF IT DOESN'T EXIST
-    default_path = 'hdf5'
+    default_path = 'h5'
     path = kwargs.pop('path', default_path)
     pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
     # FILENAME
-    default_filename = f'{mcmc.mcmc_type()}.hdf5'
+    default_filename = f'{timestamp()}.h5'
     filename = kwargs.pop('filename', default_filename)
 
     # OPEN FILE IN READ/WRITE/CREATE MODE
-    f = h5py.File(f'{path}/{filename}', mode)
+    fullpath = f'{path}/{filename}'
+    f = h5py.File(fullpath, mode)
 
     # DATASET NAME
-    default_dataset_name = f'{mcmc.mcmc_type()}_{timestamp()}'
-    dataset_name = kwargs.pop('dataset_name', default_dataset_name)
+    dataset_name = kwargs.pop('dataset_name', None)
+    if dataset_name is None:
+        # NO DATASET NAME SPECIFIED
+        # USE DEFAULT DATASET NAME 0,
+        # OR "NUMBER OF DATA SETS" IF 0 EXISTS
+        tmp = list(f.keys())
+        dataset_name = str(len(tmp))
 
     # CREATE DATASET WITH THE CHAIN AS DATA
     chain = mcmc.chain()
@@ -55,3 +62,5 @@ def mcmc_to_disk(mcmc, **kwargs):
     # ADD ATTRIBUTES
     for key, value in kwargs.items():
         dset.attrs[key] = value
+
+    return (path, filename, dataset_name)
