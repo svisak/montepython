@@ -158,9 +158,9 @@ class MCMC(ABC):
             print(f'Finished batch in {time.time()-t:.0f} s')
             print(f'Acceptance rate: {self.acceptance_rate()}')
             path, filename, dataset_name = self.to_disk(path=path, filename=filename, dataset_name=dataset_name, mode='a', **metadata)
-        if self.acceptance_rate() < acceptance_rate_limit:
-            print(f'Low acceptance rate ({self.acceptance_rate()}), terminating')
-            sys.exit(1)
+            if self.acceptance_rate() < acceptance_rate_limit:
+                print(f'Low acceptance rate ({self.acceptance_rate()}), terminating')
+                sys.exit(1)
 
     def sample(self):
         # PROPOSE NEW STATE
