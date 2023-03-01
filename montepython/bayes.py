@@ -70,7 +70,7 @@ class Bayes(ABC):
         raise NotImplementedError("Unimplemented abstract method!")
 
 
-class PosteriorSpec(ABC):
+class SimpleBayes(ABC):
     """Abstract Bayes class. As a user, you should implement your posterior
     here. If you're using the HMC algorithm you must also implement
     the gradient of either the log posterior or the negative log posterior.
