@@ -1,6 +1,7 @@
 # HMC sampling class.
 
 import numpy as np
+import sys
 
 from .mcmc import MCMC
 from .leapfrog import Leapfrog
@@ -45,6 +46,14 @@ class HMC(MCMC):
         default_mass_matrix = np.eye(self.ndim())
         self._mass_matrix = kwargs.pop('mass_matrix', default_mass_matrix)
         self._inverse_mass_matrix = np.linalg.inv(self._mass_matrix)
+
+        # CHECK THAT MASS MATRIX IS POSITIVE SEMIDEFINITE.
+        # np.random.multivariate_normal MAY STILL GIVE WARNINGS; THESE CAN BE IGNORED.
+        try:
+            np.linalg.cholesky(self._mass_matrix)
+        except np.linalg.LinAlgError:
+            print('Mass matrix is not positive semidefinite, exiting.')
+            sys.exit(1)
 
         # INSTANTIATE LEAPFROG
         tmp = self._inverse_mass_matrix
