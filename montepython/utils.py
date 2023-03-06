@@ -4,6 +4,7 @@ import time
 import h5py
 import os
 import pathlib
+import numpy as np
 
 def timestamp():
     return time.strftime("%Y%m%d_%H%M%S", time.gmtime())
@@ -64,3 +65,10 @@ def mcmc_to_disk(mcmc, **kwargs):
         dset.attrs[key] = value
 
     return (path, filename, dataset_name)
+
+def check_positive_semidefinite(matrix):
+    try:
+        np.linalg.cholesky(matrix)
+        return True
+    except np.linalg.LinAlgError:
+        return False

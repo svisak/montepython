@@ -5,6 +5,7 @@ import sys
 
 from .mcmc import MCMC
 from .leapfrog import Leapfrog
+from .utils import check_positive_semidefinite
 
 class HMC(MCMC):
     """
@@ -49,10 +50,8 @@ class HMC(MCMC):
 
         # CHECK THAT MASS MATRIX IS POSITIVE SEMIDEFINITE.
         # np.random.multivariate_normal MAY STILL GIVE WARNINGS; THESE CAN BE IGNORED.
-        try:
-            np.linalg.cholesky(self._mass_matrix)
-        except np.linalg.LinAlgError:
-            print('Mass matrix is not positive semidefinite, exiting.')
+        if not check_positive_semidefinite(self._mass_matrix):
+            print('Mass matrix is not positive semidefinite! Exiting.')
             sys.exit(1)
 
         # INSTANTIATE LEAPFROG
