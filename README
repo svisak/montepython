@@ -1,16 +1,9 @@
 INSTALLATION
 ============
 
-Running
+Run
 
-  python setup.py install
-
-will install montepython to your site-packages directory, which is in the Python path.
-Alternatively, if you don't have write permission to the default site-packages directory, you can do
-
-  python setup.py install --user
-
-If you don't want a system-wide installation you can simply put the package in the same folder as your run script.
+  python -m pip install .
 
 
 USAGE
@@ -21,9 +14,9 @@ Import:
   import montepython
   import numpy as np
 
-Define the distribution to be sampled (here a multivariate gaussian) by extending the abstract base class Bayes:
+Define the distribution to be sampled (here a multivariate Gaussian) by extending the abstract base class SimpleBayes:
 
-  class MultivariateGaussian(montepython.Bayes):
+  class MultivariateGaussian(montepython.SimpleBayes):
 
       # OPTIONAL CUSTOM CONSTRUCTOR
       def __init__(self, mu, cov):
@@ -34,20 +27,17 @@ Define the distribution to be sampled (here a multivariate gaussian) by extendin
 
       # THIS METHOD IS MANDATORY, NOTE HOW THE DIFFERENT VALUES ARE SET
       def evaluate(self, position):
-          # PRIOR
-          self.set_lnprior_value(0)
-
-          # LIKELIHOOD
+          # POSTERIOR
           diff = position - self.mu
-          lnlikelihood_value = -0.5 * diff.T @ self.cov_inv @ diff
-          self.set_lnlikelihood_value(lnlikelihood_value)
+          lnposterior_value = -0.5 * diff.T @ self.cov_inv @ diff
+          self.set_lnposterior_value(lnposterior_value)
 
-          # NEGATIVE LOG POSTERIOR GRADIENT (HMC ONLY)
-          nlp_gradient_value = self.cov_inv @ diff
-          self.set_nlp_gradient_value(nlp_gradient_value)
+          # LOG POSTERIOR GRADIENT (HMC ONLY)
+          lnposterior_gradient = -self.cov_inv @ diff
+          self.set_lnposterior_gradient(lnposterior_gradient)
 
 
-Note that the nlp_gradient_value will be an array.
+Note that lnposterior_gradient will be an array.
 Now instantiate the Bayes object:
 
   ndim = 2
@@ -58,13 +48,13 @@ Now instantiate the Bayes object:
 Set some run parameters:
 
   startpos = np.zeros(ndim)
-  ell = 20 # NUMBER OF LEAPFROG STEPS
-  epsilon = 0.3 # LEAPFROG STEP SIZE
+  n_timesteps = 20 # NUMBER OF LEAPFROG STEPS; ALTERNATIVE NAME 'leapfrog_ell'
+  dt = 0.1 # LEAPFROG STEP SIZE; ALTERNATIVE NAME 'leapfrog_epsilon'
 
-Set stepsize instead of ell and epsilon if you're running RWM.
+Set 'stepsize' instead of ell and epsilon if you're running RWM.
 Now initialize the sampler:
 
-  hmc = montepython.HMC(bayes, startpos, leapfrog_ell=ell, leapfrog_epsilon=epsilon)
+  hmc = montepython.HMC(bayes, startpos, n_timesteps=n_timesteps, dt=dt)
 
 And run it for 100 iterations:
 
@@ -74,8 +64,27 @@ If it turns out that 100 samples wasn't enough, you can continue where you left 
 
   hmc.run(2000)
 
-The length of the chain is now 2100.
-Access some information:
+The length of the chain is now 2100. Alternatively, you can run the sampler for a predetermined time period (here T=1.0 hours) ...
+
+  hmc.run_for(1.0, unit='hours')
+
+... or for NxT time periods (this is a very useful option):
+
+  hmc.batched_run_for(T, N)
+
+The batched_run_for method will sample for NxT hours (or minutes/seconds) with an automatic invocation of hmc.to_disk() (see below) after each batch.
+See the docstring/code for further options. (The optional arguments 'path', filename', and 'dataset_name' are forwarded to the hmc.to_disk() method.)
+
+You _ALMOST CERTAINLY_ don't want to use the default mass matrix, and constructing a good mass matrix by hand is in general very hard.
+montepython therefore includes functionality to tune the mass matrix via BFGS minimization of the posterior. To use it:
+
+  optimization_startpos = np.zeros(ndim) # CHOOSE A START POSITION FOR OPTIMIZATION
+  mass_matrix = montepython.tune_mass_matrix(bayes, optimization_startpos)
+  hmc = montepython.HMC(bayes, startpos, n_timesteps=n_timesteps, dt=dt, mass_matrix=mass_matrix)
+
+See the docstring for montepython.tune_mass_matrix for further information. This method, while often producing very good results, is not fool-proof; you have to check diagnostics yourself.
+
+You can access some information:
 
   print(hmc.acceptance_rate())
   chain = hmc.chain()
@@ -86,15 +95,13 @@ Finally you can save the chain to disk in HDF5 format with optional metadata:
   metadata = {}
   metadata['some_info'] = 'HMC sampling of a Gaussian'
   hmc.to_disk(**metadata)
-  # or simply hmc.to_disk(info='My info')
+  # Alternatively: hmc.to_disk(info='My info')
 
-The to_disk method saves a lot of metadata by default, such as acceptance rate.
+The to_disk method saves a lot of metadata by default, such as acceptance rate. The default path is 'h5' and the default filename is a timestamp. The default dataset name is '0' if the file is just created, '1' if the file already contains one chain, and so on.
 
 Optionally you can set the HDF5 path, filename and dataset name:
 
-  hmc.to_disk(path='my_path', filename='gauss.hdf5', dataset_name='gauss2d')
-
-If the dataset name conflicts with an existing dataset the default dataset name (MCMC-type underscore timestamp) will be used instead.
+  hmc.to_disk(path='my_path', filename='gauss.h5', dataset_name='gauss2d')
 
 
 VERSION
@@ -105,3 +112,37 @@ Use
   montepython.__version__
 
 to get the current version as a string.
+
+
+CITATION
+========
+
+If you wish to cite this package, please use:
+@article{Svensson:2021lzs,
+    author = {Svensson, Isak and Ekstr\"om, Andreas and Forss\'en, Christian},
+    title = "Bayesian parameter estimation in chiral effective field theory using the {H}amiltonian {M}onte {C}arlo method},
+    eprint = "2110.04011",
+    archivePrefix = "arXiv",
+    primaryClass = "nucl-th",
+    doi = "10.1103/PhysRevC.105.014004",
+    journal = "Phys. Rev. C",
+    volume = "105",
+    number = "1",
+    pages = "014004",
+    year = "2022"
+}
+
+The method for tuning the mass matrix used in the montepython.tune_mass_matrix() function is described in this paper:
+@article{Svensson:2022kkj,
+    author = {Svensson, Isak and Ekstr\"om, Andreas and Forss\'en, Christian},
+    title = {Bayesian estimation of the low-energy constants up to fourth order in the nucleon-nucleon sector of chiral effective field theory},
+    eprint = "2206.08250",
+    archivePrefix = "arXiv",
+    primaryClass = "nucl-th",
+    doi = "10.1103/PhysRevC.107.014001",
+    journal = "Phys. Rev. C",
+    volume = "107",
+    number = "1",
+    pages = "014001",
+    year = "2023"
+}
