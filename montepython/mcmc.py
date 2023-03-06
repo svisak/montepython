@@ -152,6 +152,11 @@ class MCMC(ABC):
         self._total_runtime += t_elapsed
 
     def batched_run_for(self, t_limit, n_batches, unit='hours', path=None, filename=None, dataset_name=None, acceptance_rate_limit=0.2, **metadata):
+        """
+        Invoke run_for() n_batches times, with an automatic save-to-disk after each batch.
+        'path', 'filename', and 'dataset_name' (all optional) are forwarded to the to_disk() method.
+        By default, the result will be saved to 'h5/<timestamp>.h5 in the dataset '0'.
+        """
         for i in range(n_batches):
             t = time.time()
             self.run_for(t_limit)
