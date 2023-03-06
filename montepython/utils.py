@@ -72,3 +72,12 @@ def check_positive_semidefinite(matrix):
         return True
     except np.linalg.LinAlgError:
         return False
+
+def print_vector(v, fmt):
+    for x in v:
+        print(f'{x:{fmt}}', end=' ')
+    print()
+
+def print_matrix(m, fmt):
+    for row in m:
+        print_vector(row, fmt)
