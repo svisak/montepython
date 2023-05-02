@@ -64,6 +64,9 @@ def mcmc_to_disk(mcmc, **kwargs):
     for key, value in kwargs.items():
         dset.attrs[key] = value
 
+    # CLOSE FILE
+    f.close()
+
     return (path, filename, dataset_name)
 
 def check_positive_semidefinite(matrix):
