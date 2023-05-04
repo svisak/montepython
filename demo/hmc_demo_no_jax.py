@@ -3,8 +3,6 @@ import prettyplease
 
 import h5py
 import numpy as np
-import jax
-jax.config.update('jax_platform_name', 'cpu') # Get rid of annoying GPU warning
 
 class MultivariateGaussian(montepython.SimpleBayes):
     '''I no longer use the montepython.Bayes class, SimpleBayes is more convenient.'''
@@ -15,13 +13,22 @@ class MultivariateGaussian(montepython.SimpleBayes):
         self.mu = mu
         self.cov = cov
         self.cov_inv = np.linalg.inv(cov)
-        # Since I use JAX, define a AD'd and jitted method:
-        self.lnposterior_AD = jax.value_and_grad(jax.jit(self.lnposterior))
+
+    def lnprior(self, position):
+        return 0
+
+    def lnlikelihood(self, position):
+        diff = position - self.mu
+        return -0.5 * diff.T @ self.cov_inv @ diff
 
     def lnposterior(self, position):
         '''Define posterior.'''
+        return self.lnlikelihood(position) + self.lnprior(position)
+
+    def lnposterior_gradient(self, position):
+        '''Gradient of the log posterior.'''
         diff = position - self.mu
-        return -0.5 * diff.T @ self.cov_inv @ diff
+        return -self.cov_inv @ diff
 
     def evaluate(self, position):
         '''
@@ -30,9 +37,11 @@ class MultivariateGaussian(montepython.SimpleBayes):
         Preferably with the set methods as shown.
         How you get hold of value and grad is up to you ...
         '''
-        value, grad = self.lnposterior_AD(position)
+        value = self.lnposterior(position)
+        grad = self.lnposterior_gradient(position)
         self.set_lnposterior_value(value)
         self.set_lnposterior_gradient(grad)
+
 
 print('Setting up posterior')
 # Random number generator
@@ -70,6 +79,7 @@ print(f'Acceptance rate: {acc_rate:.2f}')
 ######################### A TIMED RUN ###################################
 # In addition to run(), montepython has two other methods for sampling.
 # The first is run_for(t_limit, unit='hours') which runs for t_limit units.
+# These samples will be appended to the existing 100, exactly as if they originated from the same call.
 
 t_limit = 0.2
 unit = 'minutes'
@@ -80,10 +90,11 @@ print(f'Finished running.')
 ######################### A BATCHED TIMED RUN WITH AUTOSAVE ###################################
 # The second, which I use, is batched_run_for(t_limit, n_batches, unit='hours', *args, **kwargs)
 # which runs for t_limit units n_batches times _with an autosave after each batch_.
+# As before, these samples will be appended to the existing ones.
 
 n_batches = 3
 path = 'chains' # Optional. Defaults to 'h5'. Will be created if it does not exist.
-filename = 'chain.h5' # Optional. Defaults to a timestamp. I recommend using the default. 
+filename = 'hmc_no_jax.h5' # Optional. Defaults to a timestamp. I recommend using the default.
 # dataset_name = 'some_name' # I recommend AGAINST specifying this. But you can do it.
 additional_info = {}
 additional_info['seed'] = seed
