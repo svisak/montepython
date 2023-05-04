@@ -50,6 +50,9 @@ class Bayes(ABC):
     def set_nlp_gradient_value(self, val):
         self._nlp_gradient_value = val
 
+    def set_lnposterior_gradient(self, val):
+        self.set_nlp_gradient_value(-val)
+
     def state_info(self):
         """
         If this method returns a dictionary, each item in the dictionary will
