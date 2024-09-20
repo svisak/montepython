@@ -143,12 +143,16 @@ class MCMC(ABC):
         Run the MCMC sampler for the specified length of time.
         Valid units are 'minutes', 'hours', and 'days'.
         """
+        print(f'Sampling for {t_limit} {unit}')
         t_limit = convert_to_seconds(t_limit, unit)
         t_start = time.time()
         t_elapsed = 0
+        n_samples = 0
         while t_elapsed < t_limit:
             self.sample()
             t_elapsed = time.time() - t_start
+            n_samples += 1
+        print(f'Performed {n_samples} samples')
         self._total_runtime += t_elapsed
 
     def batched_run_for(self, t_limit, n_batches, unit='hours', path=None, filename=None, dataset_name=None, acceptance_rate_limit=0.2, **metadata):
