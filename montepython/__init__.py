@@ -6,5 +6,6 @@ from . import utils
 from . import diagnostics
 from .tuning import tune_mass_matrix
 
-import pkg_resources
-__version__ = pkg_resources.require("montepython")[0].version
+from importlib.metadata import metadata
+meta = metadata(__package__ or __name__)
+__version__ = meta.get('Version')
